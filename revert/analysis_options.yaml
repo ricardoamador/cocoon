@@ -1,0 +1,12 @@
+include: ../analysis_options.yaml
+
+analyzer:
+  language:
+    strict-raw-types: false # TODO: Remove this lint
+
+linter:
+  rules:
+    constant_identifier_names: false # we have all capitalized enums in check_for_waiting_pull_requests_test.dart
+    require_trailing_commas: true
+    unawaited_futures: true
+    prefer_final_fields: true
