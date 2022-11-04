@@ -3,13 +3,12 @@
 // found in the LICENSE file.
 
 import 'package:revert/exception/bigquery_exception.dart';
+import 'package:revert/model/auto_submit_query_result.dart';
 import 'package:revert/model/big_query_pull_request_record.dart';
 import 'package:revert/model/big_query_revert_request_record.dart';
 import 'package:revert/model/pull_request_change_type.dart';
 import 'dart:async';
 
-import 'package:revert/exception/retryable_merge_exception.dart';
-import 'package:revert/requests/check_pull_request_queries.dart';
 import 'package:revert/service/bigquery.dart';
 import 'package:revert/service/config.dart';
 import 'package:revert/service/github_service.dart';
@@ -22,9 +21,8 @@ import 'package:github/github.dart' as github;
 import 'package:graphql/client.dart' as graphql;
 import 'package:retry/retry.dart';
 
-import '../model/auto_submit_query_result.dart';
+import '../exception/retryable_exception.dart';
 import '../request_handling/pubsub.dart';
-import '../validations/approval.dart';
 import '../validations/validation.dart';
 import 'approver_service.dart';
 
@@ -37,17 +35,11 @@ class ValidationService {
     /// Validates a PR marked with the reverts label.
     revertValidation = Revert(config: config);
     approverService = ApproverService(config);
-
-    validations.addAll({
-      /// Validates the PR has been approved following the codereview guidelines.
-      Approval(config: config),
-    });
   }
 
   Revert? revertValidation;
   ApproverService? approverService;
   final Config config;
-  final Set<Validation> validations = <Validation>{};
   final RetryOptions retryOptions;
 
   /// Processes a pub/sub message associated with PullRequest event.
@@ -94,7 +86,7 @@ class ValidationService {
         .map<String>((github.IssueLabel labelMap) => labelMap.name)
         .toList();
 
-    if (currentPullRequest.state == 'closed' && labelNames.contains(Config.kRevertLabel)) {
+    if (currentPullRequest.state == 'open' && labelNames.contains(Config.kRevertLabel)) {
       return ProcessMethod.processRevert;
     } else {
       return ProcessMethod.doNotProcess;
@@ -121,12 +113,14 @@ class ValidationService {
       await approverService!.revertApproval(result, messagePullRequest);
 
       final ProcessMergeResult processed = await processMerge(
+        githubService: gitHubService,
         config: config,
         queryResult: result,
         messagePullRequest: messagePullRequest,
       );
 
       if (processed.result) {
+        log.info('Revert request ${slug.fullName}#$prNumber was merged successfully.');
         try {
           final RevertReviewTemplate revertReviewTemplate = RevertReviewTemplate(
             repositorySlug: slug.fullName,
@@ -209,6 +203,7 @@ Exception: ${exception.message}
 
   /// Merges the commit if the PullRequest passes all the validations.
   Future<ProcessMergeResult> processMerge({
+    required GithubService githubService,
     required Config config,
     required QueryResult queryResult,
     required github.PullRequest messagePullRequest,
@@ -217,25 +212,23 @@ Exception: ${exception.message}
     final int number = messagePullRequest.number!;
 
     try {
-      // The createGitHubGraphQLClient can throw Exception on github permissions
-      // errors.
-      final graphql.GraphQLClient client = await config.createGitHubGraphQLClient(slug);
-      graphql.QueryResult? result;
+      github.PullRequestMerge? result;
 
       await retryOptions.retry(
         () async {
           result = await _processMergeInternal(
-            client: client,
-            config: config,
-            queryResult: queryResult,
-            messagePullRequest: messagePullRequest,
+            githubService: githubService,
+            slug: slug,
+            number: number,
+            // TODO(ricardoamador): make this configurable per repository, https://github.com/flutter/flutter/issues/114557
+            mergeMethod: github.MergeMethod.squash,
           );
         },
-        retryIf: (Exception e) => e is RetryableMergeException,
+        retryIf: (Exception e) => e is RetryableException,
       );
 
-      if (result != null && result!.hasException) {
-        final String message = 'Failed to merge pr#: $number with ${result!.exception}';
+      if (result != null && !result!.merged!) {
+        final String message = 'Failed to merge pr#: $number with ${result!.message}';
         log.severe(message);
         return ProcessMergeResult(false, message);
       }
@@ -275,7 +268,7 @@ Exception: ${exception.message}
     log.info('Updated pull request info: ${currentPullRequest.toString()}');
 
     // add a record for the pull request into our metrics tracking
-    PullRequestRecord pullRequestRecord = PullRequestRecord(
+    final PullRequestRecord pullRequestRecord = PullRequestRecord(
       organization: currentPullRequest.base!.repo!.slug().owner,
       repository: currentPullRequest.base!.repo!.slug().name,
       author: currentPullRequest.user!.login,
@@ -289,7 +282,7 @@ Exception: ${exception.message}
     log.info('Created pull request record: ${pullRequestRecord.toString()}');
 
     try {
-      BigqueryService bigqueryService = await config.createBigQueryService();
+      final BigqueryService bigqueryService = await config.createBigQueryService();
       await bigqueryService.insertPullRequestRecord(
         projectId: Config.flutterGcpProjectId,
         pullRequestRecord: pullRequestRecord,
@@ -310,12 +303,12 @@ Exception: ${exception.message}
     // Get the updated revert issue.
     final github.PullRequest currentPullRequest = await gitHubService.getPullRequest(slug, revertPullRequest.number!);
     // Get the original pull request issue.
-    String originalPullRequestLink = revertValidation!.extractLinkFromText(revertPullRequest.body)!;
-    int originalPullRequestNumber = int.parse(originalPullRequestLink.split('#').elementAt(1));
+    final String originalPullRequestLink = revertValidation!.extractLinkFromText(revertPullRequest.body)!;
+    final int originalPullRequestNumber = int.parse(originalPullRequestLink.split('#').elementAt(1));
     // return int.parse(linkSplit.elementAt(1));
     final github.PullRequest originalPullRequest = await gitHubService.getPullRequest(slug, originalPullRequestNumber);
 
-    RevertRequestRecord revertRequestRecord = RevertRequestRecord(
+    final RevertRequestRecord revertRequestRecord = RevertRequestRecord(
       organization: currentPullRequest.base!.repo!.slug().owner,
       repository: currentPullRequest.base!.repo!.slug().name,
       author: currentPullRequest.user!.login,
@@ -334,7 +327,7 @@ Exception: ${exception.message}
     );
 
     try {
-      BigqueryService bigqueryService = await config.createBigQueryService();
+      final BigqueryService bigqueryService = await config.createBigQueryService();
       await bigqueryService.insertRevertRequestRecord(
         projectId: Config.flutterGcpProjectId,
         revertRequestRecord: revertRequestRecord,
@@ -360,36 +353,25 @@ class ProcessMergeResult {
 typedef RetryHandler = Function();
 
 /// Internal wrapper for the logic of merging a pull request into github.
-Future<graphql.QueryResult> _processMergeInternal({
-  required graphql.GraphQLClient client,
-  required Config config,
-  required QueryResult queryResult,
-  required github.PullRequest messagePullRequest,
+Future<github.PullRequestMerge> _processMergeInternal({
+  required GithubService githubService,
+  required github.RepositorySlug slug,
+  required int number,
+  required github.MergeMethod mergeMethod,
+  String? commitMessage,
+  String? requestSha,
 }) async {
-  final String id = queryResult.repository!.pullRequest!.id!;
-
-  final PullRequest pullRequest = queryResult.repository!.pullRequest!;
-  final Commit commit = pullRequest.commits!.nodes!.single.commit!;
-  final String? sha = commit.oid;
-  final int number = messagePullRequest.number!;
-
-  final graphql.QueryResult result = await client.mutate(
-    graphql.MutationOptions(
-      document: mergePullRequestMutation,
-      variables: <String, dynamic>{
-        'id': id,
-        'oid': sha,
-        'title': '${queryResult.repository!.pullRequest!.title} (#$number)',
-      },
-    ),
+  final github.PullRequestMerge pullRequestMerge = await githubService.mergePullRequest(
+    slug,
+    number,
+    commitMessage: commitMessage,
+    mergeMethod: mergeMethod,
+    requestSha: requestSha,
   );
 
-  // We have to make this check because mutate does not explicitely throw an
-  // exception, rather it wraps any exceptions encountered.
-  if (result.hasException) {
-    // This exception will bubble up if retries are exhausted.
-    throw RetryableMergeException(result.exception!.graphqlErrors.first.message, result.exception!.graphqlErrors);
+  if (pullRequestMerge.merged != true) {
+    throw RetryableException("Pull request could not be merged: ${pullRequestMerge.message}");
   }
 
-  return result;
+  return pullRequestMerge;
 }

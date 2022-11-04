@@ -44,7 +44,7 @@ class CheckPullRequest extends AuthenticatedRequestHandler {
       return Response.ok('No messages are pulled.');
     }
     log.info('Processing ${messageList.length} messages');
-    ValidationService validationService = ValidationService(config);
+    final ValidationService validationService = ValidationService(config);
     final List<Future<void>> futures = <Future<void>>[];
 
     for (pub.ReceivedMessage message in messageList) {
@@ -54,6 +54,7 @@ class CheckPullRequest extends AuthenticatedRequestHandler {
       log.info('Processing message ackId: ${message.ackId}');
       log.info('Processing mesageId: ${message.message!.messageId}');
       log.info('Processing PR: $rawBody');
+
       if (processingLog.contains(pullRequest.number)) {
         // Ack duplicate.
         log.info('Ack the duplicated message : ${message.ackId!}.');
@@ -64,6 +65,7 @@ class CheckPullRequest extends AuthenticatedRequestHandler {
         log.info('Approved pull request: $rawBody');
         processingLog.add(pullRequest.number!);
       }
+
       futures.add(validationService.processMessage(pullRequest, message.ackId!, pubsub));
     }
     await Future.wait(futures);

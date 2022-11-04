@@ -55,7 +55,7 @@ class GithubService {
       return listPullRequestFiles;
     }
 
-    Stream<PullRequestFile> pullRequestFiles = github.pullRequests.listFiles(slug, pullRequestId);
+    final Stream<PullRequestFile> pullRequestFiles = github.pullRequests.listFiles(slug, pullRequestId);
 
     await for (PullRequestFile file in pullRequestFiles) {
       listPullRequestFiles.add(file);
@@ -74,7 +74,7 @@ class GithubService {
     List<String>? assignees,
     String? state,
   }) async {
-    IssueRequest issueRequest = IssueRequest(
+    final IssueRequest issueRequest = IssueRequest(
       title: title,
       body: body,
       labels: labels,
@@ -127,6 +127,24 @@ class GithubService {
       body: GitHubJson.encode({'expected_head_sha': headSha}),
     );
     return response.statusCode == StatusCodes.ACCEPTED;
+  }
+
+  /// Merges a pull request according to the MergeMethod type. Current supported
+  /// merge method types are merge, rebase and squash.
+  Future<PullRequestMerge> mergePullRequest(
+    RepositorySlug slug,
+    int number, {
+    String? commitMessage,
+    MergeMethod mergeMethod = MergeMethod.merge,
+    String? requestSha,
+  }) async {
+    return await github.pullRequests.merge(
+      slug,
+      number,
+      message: commitMessage,
+      mergeMethod: mergeMethod,
+      requestSha: requestSha,
+    );
   }
 
   /// Automerges a given pull request with HEAD to ensure the commit is not in conflicting state.

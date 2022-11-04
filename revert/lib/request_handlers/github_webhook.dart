@@ -13,7 +13,7 @@ import '../request_handling/pubsub.dart';
 import '../service/config.dart';
 import '../service/log.dart';
 import '../server/request_handler.dart';
-import '../requests/exceptions.dart';
+import '../request_handlers/exceptions.dart';
 
 /// Handler for processing GitHub webhooks.
 ///
@@ -47,6 +47,7 @@ class GithubWebhook extends RequestHandler {
     final String rawBody = utf8.decode(requestBytes);
     final body = json.decode(rawBody) as Map<String, dynamic>;
 
+    // TODO state must also be closed and merged as well as having the correct label.
     if (!body.containsKey('pull_request') || !((body['pull_request'] as Map<String, dynamic>).containsKey('labels'))) {
       return Response.ok(jsonEncode(<String, String>{}));
     }
