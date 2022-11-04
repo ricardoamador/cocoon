@@ -57,7 +57,7 @@ class CheckPullRequest extends AuthenticatedRequestHandler {
       if (processingLog.contains(pullRequest.number)) {
         // Ack duplicate.
         log.info('Ack the duplicated message : ${message.ackId!}.');
-        await pubsub.acknowledge('auto-submit-queue-sub', message.ackId!);
+        await pubsub.acknowledge('revert-queue-sub', message.ackId!);
         continue;
       } else {
         await approver.autoApproval(pullRequest);
@@ -77,7 +77,7 @@ class CheckPullRequest extends AuthenticatedRequestHandler {
   Future<List<pub.ReceivedMessage>> pullMessages() async {
     final Map<String, pub.ReceivedMessage> messageMap = <String, pub.ReceivedMessage>{};
     for (int i = 0; i < kPubsubPullNumber; i++) {
-      final pub.PullResponse pullResponse = await pubsub.pull('auto-submit-queue-sub', kPullMesssageBatchSize);
+      final pub.PullResponse pullResponse = await pubsub.pull('revert-queue-sub', kPullMesssageBatchSize);
       final List<pub.ReceivedMessage>? receivedMessages = pullResponse.receivedMessages;
       if (receivedMessages == null) {
         continue;

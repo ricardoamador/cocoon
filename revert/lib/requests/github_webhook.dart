@@ -43,8 +43,6 @@ class GithubWebhook extends RequestHandler {
       throw const Forbidden();
     }
 
-    // Listen to the pull request with 'autosubmit' label.
-    bool hasAutosubmit = false;
     bool hasRevertLabel = false;
     final String rawBody = utf8.decode(requestBytes);
     final body = json.decode(rawBody) as Map<String, dynamic>;
@@ -54,12 +52,11 @@ class GithubWebhook extends RequestHandler {
     }
 
     final PullRequest pullRequest = PullRequest.fromJson(body['pull_request'] as Map<String, dynamic>);
-    hasAutosubmit = pullRequest.labels!.any((label) => label.name == Config.kAutosubmitLabel);
     hasRevertLabel = pullRequest.labels!.any((label) => label.name == Config.kRevertLabel);
 
-    if (hasAutosubmit || hasRevertLabel) {
-      log.info('Found pull request with auto submit and/or revert label.');
-      await pubsub.publish('auto-submit-queue', pullRequest);
+    if (hasRevertLabel) {
+      log.info('Found pull request with revert label.');
+      await pubsub.publish('revert-queue', pullRequest);
     }
 
     return Response.ok(rawBody);

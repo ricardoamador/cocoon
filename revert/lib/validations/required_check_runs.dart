@@ -8,6 +8,7 @@
 const String ciyamlValidation = 'ci.yaml validation';
 
 /// flutter, engine, cocoon, plugins, packages, buildroot and tests
+//TODO (ricardoamador): make this configurable in the .github dir.
 const Map<String, List<String>> requiredCheckRunsMapping = {
   'flutter': [ciyamlValidation],
   'engine': [ciyamlValidation],

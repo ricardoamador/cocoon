@@ -17,9 +17,7 @@ import 'package:revert/service/graphql_service.dart';
 import 'package:revert/service/log.dart';
 import 'package:revert/service/process_method.dart';
 import 'package:revert/service/revert_review_template.dart';
-import 'package:revert/validations/ci_successful.dart';
 import 'package:revert/validations/revert.dart';
-import 'package:revert/validations/unknown_mergeable.dart';
 import 'package:github/github.dart' as github;
 import 'package:graphql/client.dart' as graphql;
 import 'package:retry/retry.dart';
@@ -27,9 +25,6 @@ import 'package:retry/retry.dart';
 import '../model/auto_submit_query_result.dart';
 import '../request_handling/pubsub.dart';
 import '../validations/approval.dart';
-import '../validations/change_requested.dart';
-import '../validations/conflicting.dart';
-import '../validations/empty_checks.dart';
 import '../validations/validation.dart';
 import 'approver_service.dart';
 
@@ -46,21 +41,6 @@ class ValidationService {
     validations.addAll({
       /// Validates the PR has been approved following the codereview guidelines.
       Approval(config: config),
-
-      /// Validates all the tests ran and where successful.
-      CiSuccessful(config: config),
-
-      /// Validates there are no pending change requests.
-      ChangeRequested(config: config),
-
-      /// Validates that the list of checks is not empty.
-      EmptyChecks(config: config),
-
-      /// Validates the PR state is in a well known state.
-      UnknownMergeable(config: config),
-
-      /// Validates the PR is conflict free.
-      Conflicting(config: config),
     });
   }
 
@@ -75,15 +55,6 @@ class ValidationService {
     final ProcessMethod processMethod = await processPullRequestMethod(messagePullRequest);
 
     switch (processMethod) {
-      case ProcessMethod.processAutosubmit:
-        await processPullRequest(
-          config: config,
-          result: await getNewestPullRequestInfo(config, messagePullRequest),
-          messagePullRequest: messagePullRequest,
-          ackId: ackId,
-          pubsub: pubsub,
-        );
-        break;
       case ProcessMethod.processRevert:
         await processRevertRequest(
           config: config,
@@ -123,99 +94,11 @@ class ValidationService {
         .map<String>((github.IssueLabel labelMap) => labelMap.name)
         .toList();
 
-    if (currentPullRequest.state == 'open' && labelNames.contains(Config.kRevertLabel)) {
+    if (currentPullRequest.state == 'closed' && labelNames.contains(Config.kRevertLabel)) {
       return ProcessMethod.processRevert;
-    } else if (currentPullRequest.state == 'open' && labelNames.contains(Config.kAutosubmitLabel)) {
-      return ProcessMethod.processAutosubmit;
     } else {
       return ProcessMethod.doNotProcess;
     }
-  }
-
-  /// Processes a PullRequest running several validations to decide whether to
-  /// land the commit or remove the autosubmit label.
-  Future<void> processPullRequest({
-    required Config config,
-    required QueryResult result,
-    required github.PullRequest messagePullRequest,
-    required String ackId,
-    required PubSub pubsub,
-  }) async {
-    List<ValidationResult> results = <ValidationResult>[];
-
-    /// Runs all the validation defined in the service.
-    for (Validation validation in validations) {
-      final ValidationResult validationResult = await validation.validate(result, messagePullRequest);
-      results.add(validationResult);
-    }
-    final github.RepositorySlug slug = messagePullRequest.base!.repo!.slug();
-    final GithubService gitHubService = await config.createGithubService(slug);
-
-    /// If there is at least one action that requires to remove label do so and add comments for all the failures.
-    bool shouldReturn = false;
-    final int prNumber = messagePullRequest.number!;
-    for (ValidationResult result in results) {
-      if (!result.result && result.action == Action.REMOVE_LABEL) {
-        final String commmentMessage = result.message.isEmpty ? 'Validations Fail.' : result.message;
-
-        final String message = 'auto label is removed for ${slug.fullName}, pr: $prNumber, due to $commmentMessage';
-
-        await removeLabelAndComment(
-          githubService: gitHubService,
-          repositorySlug: slug,
-          prNumber: prNumber,
-          prLabel: Config.kAutosubmitLabel,
-          message: message,
-        );
-
-        log.info(message);
-
-        shouldReturn = true;
-      }
-    }
-
-    if (shouldReturn) {
-      log.info('The pr ${slug.fullName}/$prNumber with message: $ackId should be acknowledged.');
-      await pubsub.acknowledge('auto-submit-queue-sub', ackId);
-      log.info('The pr ${slug.fullName}/$prNumber is not feasible for merge and message: $ackId is acknowledged.');
-      return;
-    }
-
-    // If PR has some failures to ignore temporarily do nothing and continue.
-    for (ValidationResult result in results) {
-      if (!result.result && result.action == Action.IGNORE_TEMPORARILY) {
-        return;
-      }
-    }
-
-    // If we got to this point it means we are ready to submit the PR.
-    final ProcessMergeResult processed =
-        await processMerge(config: config, queryResult: result, messagePullRequest: messagePullRequest);
-
-    if (!processed.result) {
-      final String message = 'auto label is removed for ${slug.fullName}, pr: $prNumber, ${processed.message}.';
-
-      await removeLabelAndComment(
-        githubService: gitHubService,
-        repositorySlug: slug,
-        prNumber: prNumber,
-        prLabel: Config.kAutosubmitLabel,
-        message: message,
-      );
-
-      log.info(message);
-    } else {
-      log.info('Attempting to insert a pull request record into the database for $prNumber');
-
-      await insertPullRequestRecord(
-        config: config,
-        pullRequest: messagePullRequest,
-        pullRequestType: PullRequestChangeType.change,
-      );
-    }
-
-    log.info('Ack the processed message : $ackId.');
-    await pubsub.acknowledge('auto-submit-queue-sub', ackId);
   }
 
   /// The logic for processing a revert request and opening the follow up
