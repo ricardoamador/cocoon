@@ -9,8 +9,8 @@ import 'package:shelf/shelf.dart';
 import '../server/request_handler.dart';
 
 /// Handler for readiness checks.
-class ReadinessCheck extends RequestHandler {
-  const ReadinessCheck({
+class ReadinessCheckHandler extends RequestHandler {
+  const ReadinessCheckHandler({
     required super.config,
   });
 

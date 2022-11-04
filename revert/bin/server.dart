@@ -7,10 +7,10 @@ import 'dart:async';
 import 'package:appengine/appengine.dart';
 import 'package:revert/helpers.dart';
 import 'package:revert/request_handling/authentication.dart';
-import 'package:revert/request_handlers/check_pull_request.dart';
-import 'package:revert/request_handlers/github_webhook.dart';
-import 'package:revert/request_handlers/readiness_check.dart';
-import 'package:revert/request_handlers/update_revert_issues.dart';
+import 'package:revert/request_handlers/collect_pull_requests_handler.dart';
+import 'package:revert/request_handlers/github_webhook_handler.dart';
+import 'package:revert/request_handlers/readiness_check_handler.dart';
+import 'package:revert/request_handlers/update_revert_issues_handler.dart';
 import 'package:revert/service/config.dart';
 import 'package:revert/service/secrets.dart';
 import 'package:neat_cache/neat_cache.dart';
@@ -32,27 +32,37 @@ Future<void> main() async {
 
     final Router router = Router()
       ..post(
+        // Receives calls from github to push revert requests to pubsub.
         '/webhook',
-        GithubWebhook(
+        GithubWebhookHandler(
           config: config,
         ).post,
       )
+      // Revert pull requests.
+      // ..get(
+      //   '/revert',
+      //   CheckPullRequest(
+      //     config: config,
+      //     cronAuthProvider: authProvider,
+      //   ).run,
+      // )
       ..get(
         '/check-pull-request',
-        CheckPullRequest(
+        CollectPullRequestsHandler(
           config: config,
           cronAuthProvider: authProvider,
         ).run,
       )
       ..get(
         '/readiness_check',
-        ReadinessCheck(
+        ReadinessCheckHandler(
           config: config,
         ).run,
       )
       ..get(
+        // Update revert tracking review issue metrics.
         '/update-revert-issues',
-        UpdateRevertIssues(
+        UpdateRevertIssuesHandler(
           config: config,
           cronAuthProvider: authProvider,
         ).run,

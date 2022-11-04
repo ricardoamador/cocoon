@@ -19,8 +19,8 @@ import '../request_handlers/exceptions.dart';
 ///
 /// On events where an 'autosubmit' label was added to a pull request,
 /// check if the pull request is mergable and publish to pubsub.
-class GithubWebhook extends RequestHandler {
-  const GithubWebhook({
+class GithubWebhookHandler extends RequestHandler {
+  const GithubWebhookHandler({
     required super.config,
     this.pubsub = const PubSub(),
   });

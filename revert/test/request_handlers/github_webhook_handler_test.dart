@@ -5,21 +5,21 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:revert/request_handlers/github_webhook.dart';
-import 'package:revert/request_handlers/exceptions.dart';
+import 'package:revert/request_handlers/github_webhook_handler.dart';
+import 'package:revert/request_handlers/handler_exceptions.dart';
 import 'package:crypto/crypto.dart';
 import 'package:github/github.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
-import './github_webhook_test_data.dart';
+import 'github_webhook_handler_test_data.dart';
 import '../src/request_handling/fake_pubsub.dart';
 import '../src/service/fake_config.dart';
 
 void main() {
   group('Check Webhook', () {
     late Request req;
-    late GithubWebhook githubWebhook;
+    late GithubWebhookHandler githubWebhook;
     const String keyString = 'not_a_real_key';
     final FakeConfig config = FakeConfig(webhookKey: keyString);
     final FakePubSub pubsub = FakePubSub();
@@ -32,7 +32,7 @@ void main() {
     }
 
     setUp(() {
-      githubWebhook = GithubWebhook(config: config, pubsub: pubsub);
+      githubWebhook = GithubWebhookHandler(config: config, pubsub: pubsub);
     });
 
     test('call handler to handle the post request', () async {

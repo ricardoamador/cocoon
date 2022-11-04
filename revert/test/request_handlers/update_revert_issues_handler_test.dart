@@ -6,7 +6,7 @@ import 'dart:convert';
 
 import 'package:revert/exception/bigquery_exception.dart';
 import 'package:revert/model/big_query_revert_request_record.dart';
-import 'package:revert/request_handlers/update_revert_issues.dart';
+import 'package:revert/request_handlers/update_revert_issues_handler.dart';
 import 'package:github/github.dart';
 import 'package:googleapis/bigquery/v2.dart';
 import 'package:mockito/mockito.dart';
@@ -42,7 +42,7 @@ void main() {
   late FakeConfig fakeConfig;
   late FakeCronAuthProvider fakeCronAuthProvider;
   late MockJobsResource jobsResource;
-  late UpdateRevertIssues updateRevertReviews;
+  late UpdateRevertIssuesHandler updateRevertReviews;
 
   setUp(() {
     fakeGithubService = FakeGithubService();
@@ -53,7 +53,7 @@ void main() {
       githubService: fakeGithubService,
       bigqueryService: fakeBigqueryService,
     );
-    updateRevertReviews = UpdateRevertIssues(
+    updateRevertReviews = UpdateRevertIssuesHandler(
       config: fakeConfig,
       cronAuthProvider: fakeCronAuthProvider,
     );

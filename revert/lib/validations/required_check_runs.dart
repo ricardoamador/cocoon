@@ -27,15 +27,15 @@ const Map<String, List<String>> requiredCheckRunsMapping = {
 };
 
 class ValidateCheckRuns {
-
   ValidateCheckRuns({
     RetryOptions? retryOptions,
-  }) : retryOptions = retryOptions ?? const RetryOptions(
-    delayFactor: Duration(milliseconds: 500),
-    maxDelay: Duration(seconds: 5),
-    maxAttempts: 5,
-  );
-  
+  }) : retryOptions = retryOptions ??
+            const RetryOptions(
+              delayFactor: Duration(milliseconds: 500),
+              maxDelay: Duration(seconds: 5),
+              maxAttempts: 5,
+            );
+
   final RetryOptions retryOptions;
 
   /// Wait for the required checks to complete, and if repository has no checks

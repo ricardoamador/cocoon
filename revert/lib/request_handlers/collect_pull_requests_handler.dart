@@ -20,8 +20,8 @@ import '../server/authenticated_request_handler.dart';
 ///
 /// For pull requests where an 'autosubmit' label was added in pubsub,
 /// check if the pull request is mergable.
-class CheckPullRequest extends AuthenticatedRequestHandler {
-  const CheckPullRequest({
+class CollectPullRequestsHandler extends AuthenticatedRequestHandler {
+  const CollectPullRequestsHandler({
     required super.config,
     required super.cronAuthProvider,
     this.approverProvider = ApproverService.defaultProvider,
