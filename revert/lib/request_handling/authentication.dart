@@ -8,7 +8,7 @@ import 'dart:io';
 import 'package:meta/meta.dart';
 import 'package:shelf/shelf.dart';
 
-import '../requests/exceptions.dart';
+import '../request_handlers/exceptions.dart';
 
 /// Class capable of authenticating [HttpRequest]s.
 ///

@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:revert/requests/check_pull_request_queries.dart';
+import 'package:revert/query/check_pull_request_queries.dart';
 import 'package:revert/service/log.dart';
 import 'package:github/github.dart';
 import 'package:graphql/client.dart';
 
-import '../requests/exceptions.dart';
+import '../request_handlers/exceptions.dart';
 
 /// Service class used to execute GraphQL queries.
 class GraphQlService {

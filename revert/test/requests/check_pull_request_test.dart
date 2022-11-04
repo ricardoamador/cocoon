@@ -546,7 +546,7 @@ void main() {
       final List<pub.ReceivedMessage> messages = await checkPullRequest.pullMessages();
       expect(messages.length, 3);
     });
-  });
+  }, skip: true,);
 }
 
 QueryResult createQueryResult(PullRequestHelper pullRequest) {

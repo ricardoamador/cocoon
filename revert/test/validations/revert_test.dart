@@ -59,7 +59,7 @@ void main() {
       const String authorAssociation = 'CONTRIBUTOR';
       assert(revert.isValidAuthor(author, authorAssociation));
     });
-  });
+  }, skip: true,);
 
   group('Pattern matching for revert text link', () {
     test('Link extraction from description is successful.', () {
@@ -114,7 +114,7 @@ void main() {
         assert(linkFound == null);
       });
     });
-  });
+  }, skip: true,);
 
   group('Validate Pull Requests.', () {
     test('Validation fails on author validation, returns error.', () async {
@@ -250,5 +250,5 @@ void main() {
       assert(validationResult.result);
       assert(validationResult.message == 'Revert request has been verified and will be queued for merge.');
     });
-  });
+  }, skip: true,);
 }
