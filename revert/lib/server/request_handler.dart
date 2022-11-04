@@ -8,7 +8,7 @@ import 'package:meta/meta.dart';
 import 'package:shelf/shelf.dart';
 
 import '../service/config.dart';
-import '../request_handlers/exceptions.dart';
+import '../request_handlers/handler_exceptions.dart';
 
 @immutable
 abstract class RequestHandler {

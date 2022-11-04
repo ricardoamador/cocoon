@@ -9,7 +9,7 @@ import 'package:github/github.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
-import '../requests/github_webhook_test_data.dart';
+import '../request_handlers/github_webhook_handler_test_data.dart';
 import '../utilities/mocks.dart';
 
 void main() {

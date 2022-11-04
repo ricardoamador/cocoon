@@ -13,7 +13,7 @@ import '../request_handling/pubsub.dart';
 import '../service/config.dart';
 import '../service/log.dart';
 import '../server/request_handler.dart';
-import '../request_handlers/exceptions.dart';
+import 'handler_exceptions.dart';
 
 /// Handler for processing GitHub webhooks.
 ///

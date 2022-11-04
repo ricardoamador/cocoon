@@ -7,7 +7,7 @@ import 'package:shelf/shelf.dart';
 
 import 'request_handler.dart';
 import '../request_handling/authentication.dart';
-import '../request_handlers/exceptions.dart';
+import '../request_handlers/handler_exceptions.dart';
 import '../service/log.dart';
 
 /// A [RequestHandler] that handles API requests.

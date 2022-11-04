@@ -7,7 +7,7 @@ import 'package:revert/service/log.dart';
 import 'package:github/github.dart';
 import 'package:graphql/client.dart';
 
-import '../request_handlers/exceptions.dart';
+import '../request_handlers/handler_exceptions.dart';
 
 /// Service class used to execute GraphQL queries.
 class GraphQlService {

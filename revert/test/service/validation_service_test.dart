@@ -16,7 +16,7 @@ import 'package:mockito/mockito.dart';
 import 'package:retry/retry.dart';
 import 'package:test/test.dart';
 
-import '../requests/github_webhook_test_data.dart';
+import '../request_handlers/github_webhook_handler_test_data.dart';
 import '../src/request_handling/fake_pubsub.dart';
 import '../src/service/fake_approver_service.dart';
 import '../src/service/fake_bigquery_service.dart';

@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:revert/request_handling/authentication.dart';
-import 'package:revert/request_handlers/exceptions.dart';
+import 'package:revert/request_handlers/handler_exceptions.dart';
 import 'package:shelf/shelf.dart';
 
 // ignore: must_be_immutable
