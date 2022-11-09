@@ -6,7 +6,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:revert/model/auto_submit_query_result.dart' as auto hide PullRequest;
-import 'package:revert/service/process_method.dart';
 import 'package:revert/service/validation_service.dart';
 import 'package:revert/validations/validation.dart';
 import 'package:github/github.dart';
@@ -23,7 +22,7 @@ import '../src/service/fake_bigquery_service.dart';
 import '../src/service/fake_config.dart';
 import '../src/service/fake_graphql_client.dart';
 import '../src/service/fake_github_service.dart';
-import '../src/validations/fake_revert.dart';
+// import '../src/validations/fake_revert.dart';
 import '../utilities/utils.dart';
 import '../utilities/mocks.dart';
 import 'bigquery_test.dart';
@@ -113,9 +112,9 @@ void main() {
         body: 'Reverts flutter/flutter#1234',
       );
 
-      final FakeRevert fakeRevert = FakeRevert(config: config);
-      fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
-      validationService.revertValidation = fakeRevert;
+      // final FakeRevert fakeRevert = FakeRevert(config: config);
+      // fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
+      // validationService.revertValidation = fakeRevert;
       final FakeApproverService fakeApproverService = FakeApproverService(config);
       validationService.approverService = fakeApproverService;
 
@@ -164,9 +163,9 @@ void main() {
         body: 'Reverts flutter/flutter#1234',
       );
 
-      final FakeRevert fakeRevert = FakeRevert(config: config);
-      fakeRevert.validationResult = ValidationResult(false, Action.REMOVE_LABEL, '');
-      validationService.revertValidation = fakeRevert;
+      // final FakeRevert fakeRevert = FakeRevert(config: config);
+      // fakeRevert.validationResult = ValidationResult(false, Action.REMOVE_LABEL, '');
+      // validationService.revertValidation = fakeRevert;
       final FakeApproverService fakeApproverService = FakeApproverService(config);
       validationService.approverService = fakeApproverService;
 
@@ -204,9 +203,9 @@ void main() {
         labelName: 'revert',
       );
 
-      final FakeRevert fakeRevert = FakeRevert(config: config);
-      fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
-      validationService.revertValidation = fakeRevert;
+      // final FakeRevert fakeRevert = FakeRevert(config: config);
+      // fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
+      // validationService.revertValidation = fakeRevert;
       final FakeApproverService fakeApproverService = FakeApproverService(config);
       validationService.approverService = fakeApproverService;
 
@@ -252,9 +251,9 @@ void main() {
         body: 'Reverts flutter/flutter#1234',
       );
 
-      final FakeRevert fakeRevert = FakeRevert(config: config);
-      fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
-      validationService.revertValidation = fakeRevert;
+      // final FakeRevert fakeRevert = FakeRevert(config: config);
+      // fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
+      // validationService.revertValidation = fakeRevert;
       final FakeApproverService fakeApproverService = FakeApproverService(config);
       validationService.approverService = fakeApproverService;
 
@@ -299,10 +298,10 @@ void main() {
         body: 'Reverts flutter/flutter#1234',
       );
 
-      final FakeRevert fakeRevert = FakeRevert(config: config);
-      fakeRevert.validationResult =
-          ValidationResult(false, Action.IGNORE_TEMPORARILY, 'Some of the required checks did not complete in time.');
-      validationService.revertValidation = fakeRevert;
+      // final FakeRevert fakeRevert = FakeRevert(config: config);
+      // fakeRevert.validationResult =
+      //     ValidationResult(false, Action.IGNORE_TEMPORARILY, 'Some of the required checks did not complete in time.');
+      // validationService.revertValidation = fakeRevert;
       final FakeApproverService fakeApproverService = FakeApproverService(config);
       validationService.approverService = fakeApproverService;
 
@@ -360,9 +359,9 @@ void main() {
         body: 'Reverts flutter/flutter#1234',
       );
 
-      final FakeRevert fakeRevert = FakeRevert(config: config);
-      fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
-      validationService.revertValidation = fakeRevert;
+      // final FakeRevert fakeRevert = FakeRevert(config: config);
+      // fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
+      // validationService.revertValidation = fakeRevert;
       final FakeApproverService fakeApproverService = FakeApproverService(config);
       validationService.approverService = fakeApproverService;
 
@@ -417,9 +416,9 @@ void main() {
         body: 'Reverts flutter/flutter#1234',
       );
 
-      final FakeRevert fakeRevert = FakeRevert(config: config);
-      fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
-      validationService.revertValidation = fakeRevert;
+      // final FakeRevert fakeRevert = FakeRevert(config: config);
+      // fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
+      // validationService.revertValidation = fakeRevert;
       final FakeApproverService fakeApproverService = FakeApproverService(config);
       validationService.approverService = fakeApproverService;
 
@@ -479,9 +478,9 @@ void main() {
         body: 'Reverts flutter/flutter#1234',
       );
 
-      final FakeRevert fakeRevert = FakeRevert(config: config);
-      fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
-      validationService.revertValidation = fakeRevert;
+      // final FakeRevert fakeRevert = FakeRevert(config: config);
+      // fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
+      // validationService.revertValidation = fakeRevert;
       final FakeApproverService fakeApproverService = FakeApproverService(config);
       validationService.approverService = fakeApproverService;
 
@@ -557,9 +556,9 @@ void main() {
         body: 'Reverts flutter/flutter#1234',
       );
 
-      final FakeRevert fakeRevert = FakeRevert(config: config);
-      fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
-      validationService.revertValidation = fakeRevert;
+      // final FakeRevert fakeRevert = FakeRevert(config: config);
+      // fakeRevert.validationResult = ValidationResult(true, Action.REMOVE_LABEL, '');
+      // validationService.revertValidation = fakeRevert;
       final FakeApproverService fakeApproverService = FakeApproverService(config);
       validationService.approverService = fakeApproverService;
 
@@ -588,56 +587,5 @@ void main() {
       // We acknowledge the issue.
       assert(pubsub.messagesQueue.isEmpty);
     });
-  });
-
-  group('Process pull request', () {
-    test('Skip processing message when autosubmit label does not exist anymore', () async {
-      final PullRequest pullRequest = generatePullRequest(prNumber: 0, repoName: slug.name);
-      pullRequest.labels = <IssueLabel>[];
-      githubService.pullRequestData = pullRequest;
-      final ProcessMethod processMethod = await validationService.processPullRequestMethod(pullRequest);
-
-      expect(processMethod, ProcessMethod.doNotProcess);
-    });
-
-    test('Skip processing message when the pull request is closed', () async {
-      final PullRequest pullRequest = generatePullRequest(prNumber: 0, repoName: slug.name);
-      pullRequest.state = 'closed';
-      githubService.pullRequestData = pullRequest;
-      final ProcessMethod processMethod = await validationService.processPullRequestMethod(pullRequest);
-
-      expect(processMethod, ProcessMethod.doNotProcess);
-    });
-
-    test('Should process message when revert label exists and pr is open', () async {
-      final PullRequest pullRequest = generatePullRequest(prNumber: 0, repoName: slug.name);
-      final IssueLabel issueLabel = IssueLabel(name: 'revert');
-      pullRequest.labels = <IssueLabel>[issueLabel];
-      githubService.pullRequestData = pullRequest;
-      final ProcessMethod processMethod = await validationService.processPullRequestMethod(pullRequest);
-
-      expect(processMethod, ProcessMethod.processRevert);
-    });
-
-    test('Should process message as revert when revert and autosubmit labels are present and pr is open', () async {
-      final PullRequest pullRequest = generatePullRequest(prNumber: 0, repoName: slug.name);
-      final IssueLabel issueLabel = IssueLabel(name: 'revert');
-      pullRequest.labels!.add(issueLabel);
-      githubService.pullRequestData = pullRequest;
-      final ProcessMethod processMethod = await validationService.processPullRequestMethod(pullRequest);
-
-      expect(processMethod, ProcessMethod.processRevert);
-    });
-
-    test('Skip processing message when revert label exists and pr is closed', () async {
-      final PullRequest pullRequest = generatePullRequest(prNumber: 0, repoName: slug.name);
-      pullRequest.state = 'closed';
-      final IssueLabel issueLabel = IssueLabel(name: 'revert');
-      pullRequest.labels = <IssueLabel>[issueLabel];
-      githubService.pullRequestData = pullRequest;
-      final ProcessMethod processMethod = await validationService.processPullRequestMethod(pullRequest);
-
-      expect(processMethod, ProcessMethod.doNotProcess);
-    });
-  });
+  }, skip: true,);
 }

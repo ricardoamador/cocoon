@@ -8,6 +8,7 @@ service: revert
 
 resources:
   memory_gb: 2.0
+  disk_size_gb: 10
 
 readiness_check:
   path: "/readiness_check"
