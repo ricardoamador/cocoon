@@ -16,7 +16,6 @@ import 'package:revert/service/graphql_service.dart';
 
 import 'package:process/process.dart';
 
-
 class RevertService {
   Config config;
   ApproverService? approverService;
@@ -27,7 +26,6 @@ class RevertService {
 
   /// Processes a pub/sub message associated with PullRequest event.
   Future<void> processMessage(github.PullRequest messagePullRequest, String ackId, PubSub pubsub) async {
-
     final github.RepositorySlug slug = messagePullRequest.base!.repo!.slug();
     final GithubService gitHubService = await config.createGithubService(slug);
     final github.PullRequest currentPullRequest = await gitHubService.getPullRequest(slug, messagePullRequest.number!);
@@ -36,7 +34,9 @@ class RevertService {
         .toList();
 
     // Pull request must be closed and merged with the revert label to automatically revert.
-    if (currentPullRequest.state == 'closed' && currentPullRequest.merged! && labelNames.contains(Config.kRevertLabel)) {
+    if (currentPullRequest.state == 'closed' &&
+        currentPullRequest.merged! &&
+        labelNames.contains(Config.kRevertLabel)) {
       await processRevertRequest(
         config: config,
         result: await getNewestPullRequestInfo(config, messagePullRequest),
@@ -88,39 +88,23 @@ class RevertService {
     // need to add the custom directory here.
     processManager.runSync(<String>['git', 'clone', 'https://github.com/${slug.fullName}']);
     ProcessResult result = processManager.runSync(<String>['git', 'checkout', 'upstream/main', '-b', 'branch']);
- 
+
     return false;
   }
 
-  void performCommit() {
-    
-  }
+  void performCommit() {}
 
-  void cleanupDisk() {
+  void cleanupDisk() {}
 
-  }
+  void openPullRequest() {}
 
-  void openPullRequest() {
-    
-  }
+  void approvePullRequest() {}
 
-  void approvePullRequest() {
-    
-  }
+  void mergePullRequest() {}
 
-  void mergePullRequest() {
-    
-  }
+  void openReviewIssue() {}
 
-  void openReviewIssue() {
-    
-  }
+  void notifyDiscord() {}
 
-  void notifyDiscord() {
-    
-  }
-
-  void recordRecord() {
-    
-  }
+  void recordRecord() {}
 }

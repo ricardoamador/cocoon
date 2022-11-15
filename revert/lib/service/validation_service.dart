@@ -41,7 +41,6 @@ class ValidationService {
 
   /// Processes a pub/sub message associated with PullRequest event.
   Future<void> processMessage(github.PullRequest messagePullRequest, String ackId, PubSub pubsub) async {
-
     final github.RepositorySlug slug = messagePullRequest.base!.repo!.slug();
     final GithubService gitHubService = await config.createGithubService(slug);
     final github.PullRequest currentPullRequest = await gitHubService.getPullRequest(slug, messagePullRequest.number!);
@@ -50,7 +49,9 @@ class ValidationService {
         .toList();
 
     // Pull request must be closed and merged with the revert label to automatically revert.
-    if (currentPullRequest.state == 'closed' && currentPullRequest.merged! && labelNames.contains(Config.kRevertLabel)) {
+    if (currentPullRequest.state == 'closed' &&
+        currentPullRequest.merged! &&
+        labelNames.contains(Config.kRevertLabel)) {
       await processRevertRequest(
         config: config,
         result: await getNewestPullRequestInfo(config, messagePullRequest),

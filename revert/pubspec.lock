@@ -481,6 +481,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.3.2"
+  mutex:
+    dependency: "direct main"
+    description:
+      name: mutex
+      sha256: "9bd00c5fbb3fe0ca22508aa81dab0bab9c565f73b0c9d41adb582bfd464aa2c7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   neat_cache:
     dependency: "direct main"
     description:
