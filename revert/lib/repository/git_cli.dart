@@ -8,45 +8,60 @@ import 'package:github/github.dart';
 import 'package:logging/logging.dart';
 
 import 'package:revert/cli/cli_command.dart';
-import 'package:revert/service/config.dart';
+import 'package:revert/exception/git_exception.dart';
 
 import 'command_strategy.dart';
+import 'git_clone_method.dart';
 
-class RepositoryManager {
-  Config config;
-  RepositorySlug slug;
-
+/// Class to wrap the command line calls to git.
+class GitCli {
   Logger logger = Logger('RepositoryManager');
 
   static const String GIT = 'git';
 
-  final String repositoryUrlPrefix = 'https://github.com/';
+  final String repositoryHttpPrefix = 'https://github.com/';
+  final String repositorySshPrefix = 'git@github.com:';
 
-  RepositoryManager(this.config, this.slug);
+  late String repositoryPrefix;
+
+  GitCli(GitCloneMethod gitCloneMethod) {
+    switch (gitCloneMethod) {
+      case GitCloneMethod.SSH:
+        repositoryPrefix = repositorySshPrefix;
+        break;
+      case GitCloneMethod.HTTP:
+        repositoryPrefix = repositoryHttpPrefix;
+        break;
+    }
+  }
+
+  /// Check to see if the current directory is a git repository.
+  Future<bool> isGitRepository(String directory) async {
+    final ProcessResult processResult = await CliCommand.runCliCommand(
+      executable: GIT,
+      arguments: ['-C', directory, 'rev-parse', '2>/dev/null'],
+      throwOnError: false,
+    );
+    return processResult.exitCode == 0;
+  }
 
   /// Checkout repository if it does not currently exist on disk.
   /// We will need to protect against multiple checkouts just in case multiple
   /// calls occur at the same time.
-  Future<ProcessResult> cloneRepository(String? workingDirectory) async {
+  Future<ProcessResult> cloneRepository(RepositorySlug slug, String? workingDirectory) async {
     final ProcessResult processResult = await CliCommand.runCliCommand(
       executable: GIT,
-      arguments: ['clone', '$repositoryUrlPrefix${slug.fullName}'],
+      arguments: ['clone', '$repositoryPrefix${slug.fullName}'],
+      workingDirectory: workingDirectory,
     );
     return processResult;
   }
 
-  Future<ProcessResult> pullRebase(String? workingDirectory) async {
-    return _updateRepository(workingDirectory, '--rebase');
-  }
-
-  Future<ProcessResult> pullMerge(String? workingDirectory) async {
-    return _updateRepository(workingDirectory, '--merge');
-  }
-
-  /// git remote add upstream git@github.com:flutter/assets-for-api-docs
+  /// This is necessary with forked repos but may not be necessary with the bot
+  /// as the bot has direct access to the repository.
   Future<ProcessResult> setUpstream(
+    RepositorySlug slug,
     String branchName,
-    String? upStreamUrl,
     String workingDirectory,
   ) async {
     await CliCommand.runCliCommand(
@@ -58,14 +73,13 @@ class RepositoryManager {
       workingDirectory: workingDirectory,
     );
 
-    upStreamUrl ??= '$repositoryUrlPrefix${slug.fullName}';
     return await CliCommand.runCliCommand(
       executable: GIT,
       arguments: [
         'remote',
         'add',
         'upstream',
-        upStreamUrl,
+        '$repositoryPrefix${slug.fullName}',
       ],
       workingDirectory: workingDirectory,
     );
@@ -77,6 +91,14 @@ class RepositoryManager {
       executable: GIT,
       arguments: ['fetch', '--all'],
     );
+  }
+
+  Future<ProcessResult> pullRebase(String? workingDirectory) async {
+    return _updateRepository(workingDirectory, '--rebase');
+  }
+
+  Future<ProcessResult> pullMerge(String? workingDirectory) async {
+    return _updateRepository(workingDirectory, '--merge');
   }
 
   /// Run the git pull rebase command to keep the repository up to date.
@@ -126,12 +148,12 @@ class RepositoryManager {
   }
 
   /// Revert a pull request commit.
-  Future<ProcessResult> revertChange(
-    String branchName,
-    String commitSha,
+  Future<ProcessResult> revertChange({
+    required String branchName,
+    required String commitSha,
     CommandStrategy? revertCommitStrategy,
-    String workingDirectory,
-  ) async {
+    required String workingDirectory,
+  }) async {
     // First switch to the base branch.
     await CliCommand.runCliCommand(
       executable: GIT,
@@ -165,6 +187,31 @@ class RepositoryManager {
       executable: GIT,
       arguments: ['push', '--verbose', '--progress', 'origin', branchName],
       workingDirectory: workingDirectory,
+    );
+  }
+
+  /// Delete a local branch from the repo.
+  Future<ProcessResult> deleteLocalBranch(
+    String branchName,
+    String workingDirectory,
+  ) async {
+    return await CliCommand.runCliCommand(
+      executable: GIT,
+      arguments: ['branch', '-D', branchName,],
+      workingDirectory: workingDirectory,
+    );
+  }
+
+  /// Delete a remote branch from the repo. 
+  /// 
+  /// When merging a pull request the pr branch is not automatically deleted. 
+  Future<ProcessResult> deleteRemoteBranch(
+    String branchName,
+    String workingDirectory,
+  ) async {
+    return await CliCommand.runCliCommand(
+      executable: GIT,
+      arguments: ['push', 'origin', '--delete', branchName],
     );
   }
 }

@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'package:github/github.dart';
 import 'package:revert/model/auto_submit_query_result.dart';
+import 'package:revert/repository/git_cli.dart';
 import 'package:revert/request_handling/pubsub.dart';
 import 'package:revert/service/approver_service.dart';
 import 'package:revert/service/config.dart';
