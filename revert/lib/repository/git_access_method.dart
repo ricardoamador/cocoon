@@ -4,7 +4,7 @@
 
 /// There are two ways to clone the repository which will be configurable in the
 /// repository configuration in .github.
-enum GitCloneMethod {
+enum GitAccessMethod {
   SSH,
   HTTP,
 }

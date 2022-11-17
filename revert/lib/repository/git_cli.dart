@@ -8,10 +8,9 @@ import 'package:github/github.dart';
 import 'package:logging/logging.dart';
 
 import 'package:revert/cli/cli_command.dart';
-import 'package:revert/exception/git_exception.dart';
 
 import 'command_strategy.dart';
-import 'git_clone_method.dart';
+import 'git_access_method.dart';
 
 /// Class to wrap the command line calls to git.
 class GitCli {
@@ -24,16 +23,17 @@ class GitCli {
 
   late String repositoryPrefix;
 
-  GitCli(GitCloneMethod gitCloneMethod) {
+  GitCli(GitAccessMethod gitCloneMethod) {
     switch (gitCloneMethod) {
-      case GitCloneMethod.SSH:
+      case GitAccessMethod.SSH:
         repositoryPrefix = repositorySshPrefix;
         break;
-      case GitCloneMethod.HTTP:
+      case GitAccessMethod.HTTP:
         repositoryPrefix = repositoryHttpPrefix;
         break;
     }
   }
+
 
   /// Check to see if the current directory is a git repository.
   Future<bool> isGitRepository(String directory) async {
@@ -45,17 +45,20 @@ class GitCli {
     return processResult.exitCode == 0;
   }
 
+
   /// Checkout repository if it does not currently exist on disk.
   /// We will need to protect against multiple checkouts just in case multiple
   /// calls occur at the same time.
-  Future<ProcessResult> cloneRepository(RepositorySlug slug, String? workingDirectory) async {
+  Future<ProcessResult> cloneRepository(RepositorySlug slug, String? workingDirectory,) async {
     final ProcessResult processResult = await CliCommand.runCliCommand(
       executable: GIT,
       arguments: ['clone', '$repositoryPrefix${slug.fullName}'],
       workingDirectory: workingDirectory,
     );
+
     return processResult;
   }
+
 
   /// This is necessary with forked repos but may not be necessary with the bot
   /// as the bot has direct access to the repository.
@@ -85,6 +88,7 @@ class GitCli {
     );
   }
 
+
   /// Fetch all new refs for the repository.
   Future<ProcessResult> fetchAll(String workingDirectory) async {
     return await CliCommand.runCliCommand(
@@ -93,13 +97,16 @@ class GitCli {
     );
   }
 
+
   Future<ProcessResult> pullRebase(String? workingDirectory) async {
     return _updateRepository(workingDirectory, '--rebase');
   }
 
+
   Future<ProcessResult> pullMerge(String? workingDirectory) async {
     return _updateRepository(workingDirectory, '--merge');
   }
+
 
   /// Run the git pull rebase command to keep the repository up to date.
   Future<ProcessResult> _updateRepository(
@@ -113,6 +120,7 @@ class GitCli {
     );
     return processResult;
   }
+
 
   /// Checkout and create a branch for the current edit.
   ///
@@ -147,6 +155,7 @@ class GitCli {
     );
   }
 
+
   /// Revert a pull request commit.
   Future<ProcessResult> revertChange({
     required String branchName,
@@ -178,6 +187,7 @@ class GitCli {
     );
   }
 
+
   /// Push changes made to the local branch to github.
   Future<ProcessResult> pushBranch(
     String branchName,
@@ -190,6 +200,7 @@ class GitCli {
     );
   }
 
+
   /// Delete a local branch from the repo.
   Future<ProcessResult> deleteLocalBranch(
     String branchName,
@@ -201,6 +212,7 @@ class GitCli {
       workingDirectory: workingDirectory,
     );
   }
+
 
   /// Delete a remote branch from the repo. 
   /// 

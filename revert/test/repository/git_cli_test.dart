@@ -6,7 +6,7 @@ import 'dart:io';
 
 import 'package:github/github.dart';
 import 'package:revert/repository/git_cli.dart';
-import 'package:revert/repository/git_clone_method.dart';
+import 'package:revert/repository/git_access_method.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -15,7 +15,7 @@ void main() {
       final String workingDirectory = '${Directory.current.path}/test/repository';
       final RepositorySlug repositorySlug = RepositorySlug('ricardoamador', 'flutter_test');
 
-      final GitCli gitCli = GitCli(GitCloneMethod.SSH);
+      final GitCli gitCli = GitCli(GitAccessMethod.SSH);
       final ProcessResult processResultClone = await gitCli.cloneRepository(repositorySlug, workingDirectory);
       expect(processResultClone.exitCode, isZero);
 
@@ -43,6 +43,15 @@ void main() {
 
       final ProcessResult processResultPushChange = await gitCli.pushBranch(branchName, newWorkingDirectory);
       expect(processResultPushChange.exitCode, isZero);
+    });
+
+    test('Delete missing dir', () {
+      /// delete a non existing directory.
+      try {
+        Directory('${Directory.current.path}/testees').deleteSync(recursive: true);
+      } catch (e) {
+        /// No such file or directory.
+      }
     });
   });
 }
