@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:revert/cli/cli_command.dart';
 import 'package:revert/model/auto_submit_query_result.dart';
 import 'package:revert/repository/git_cli.dart';
 import 'package:revert/repository/git_access_method.dart';
@@ -22,8 +23,8 @@ class RevertService {
 
   RevertService(this.config) {
     approverService = ApproverService(config);
-    gitCloneManager = GitCloneManager();
-    gitCli = GitCli(GitAccessMethod.HTTP);
+    gitCli = GitCli(GitAccessMethod.SSH, CliCommand());
+    gitCloneManager = GitCloneManager(gitCli);
   }
 
   /// Processes a pub/sub message associated with PullRequest event.
@@ -73,6 +74,10 @@ class RevertService {
     required PubSub pubsub,
   }) async {
     
+    // Two types of requests based on revert label can be handled
+    // revert on a closed issue is to generate the revert commit and push it to github.
+    //    bot will add another label to the newly opened pr 'bot-revert'
+
     // When we process the revert request we need to do the following:
     // 1. run git checkout to new directory.
 

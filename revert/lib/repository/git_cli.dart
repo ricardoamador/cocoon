@@ -23,7 +23,9 @@ class GitCli {
 
   late String repositoryPrefix;
 
-  GitCli(GitAccessMethod gitCloneMethod) {
+  late CliCommand _cliCommand;
+
+  GitCli(GitAccessMethod gitCloneMethod, CliCommand cliCommand) {
     switch (gitCloneMethod) {
       case GitAccessMethod.SSH:
         repositoryPrefix = repositorySshPrefix;
@@ -32,15 +34,16 @@ class GitCli {
         repositoryPrefix = repositoryHttpPrefix;
         break;
     }
+    _cliCommand = cliCommand;
   }
 
 
   /// Check to see if the current directory is a git repository.
   Future<bool> isGitRepository(String directory) async {
-    final ProcessResult processResult = await CliCommand.runCliCommand(
+    final ProcessResult processResult = await _cliCommand.runCliCommand(
       executable: GIT,
-      arguments: ['-C', directory, 'rev-parse', '2>/dev/null'],
-      throwOnError: false,
+      arguments: ['-C', directory, 'rev-parse',],
+      throwOnError: true,
     );
     return processResult.exitCode == 0;
   }
@@ -50,7 +53,7 @@ class GitCli {
   /// We will need to protect against multiple checkouts just in case multiple
   /// calls occur at the same time.
   Future<ProcessResult> cloneRepository(RepositorySlug slug, String? workingDirectory,) async {
-    final ProcessResult processResult = await CliCommand.runCliCommand(
+    final ProcessResult processResult = await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: ['clone', '$repositoryPrefix${slug.fullName}'],
       workingDirectory: workingDirectory,
@@ -67,7 +70,7 @@ class GitCli {
     String branchName,
     String workingDirectory,
   ) async {
-    await CliCommand.runCliCommand(
+    await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: [
         'switch',
@@ -76,7 +79,7 @@ class GitCli {
       workingDirectory: workingDirectory,
     );
 
-    return await CliCommand.runCliCommand(
+    return await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: [
         'remote',
@@ -91,7 +94,7 @@ class GitCli {
 
   /// Fetch all new refs for the repository.
   Future<ProcessResult> fetchAll(String workingDirectory) async {
-    return await CliCommand.runCliCommand(
+    return await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: ['fetch', '--all'],
     );
@@ -113,7 +116,7 @@ class GitCli {
     String? workingDirectory,
     String pullMethod,
   ) async {
-    final ProcessResult processResult = await CliCommand.runCliCommand(
+    final ProcessResult processResult = await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: ['pull', pullMethod],
       workingDirectory: workingDirectory,
@@ -133,7 +136,7 @@ class GitCli {
     required String workingDirectory,
   }) async {
     // First switch to the baseBranchName.
-    await CliCommand.runCliCommand(
+    await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: [
         'switch',
@@ -148,7 +151,7 @@ class GitCli {
       '-b',
       newBranchName,
     ]);
-    return await CliCommand.runCliCommand(
+    return await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: createBranchStrategy.getCommandList,
       workingDirectory: workingDirectory,
@@ -164,7 +167,7 @@ class GitCli {
     required String workingDirectory,
   }) async {
     // First switch to the base branch.
-    await CliCommand.runCliCommand(
+    await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: [
         'switch',
@@ -176,11 +179,12 @@ class GitCli {
     // Issue a revert of the pull request.
     revertCommitStrategy ??= CommandStrategy([
       'revert',
+      '--no-edit',
       '-m',
       '1',
       commitSha,
     ]);
-    return await CliCommand.runCliCommand(
+    return await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: revertCommitStrategy.getCommandList,
       workingDirectory: workingDirectory,
@@ -193,7 +197,7 @@ class GitCli {
     String branchName,
     String workingDirectory,
   ) async {
-    return await CliCommand.runCliCommand(
+    return await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: ['push', '--verbose', '--progress', 'origin', branchName],
       workingDirectory: workingDirectory,
@@ -206,7 +210,7 @@ class GitCli {
     String branchName,
     String workingDirectory,
   ) async {
-    return await CliCommand.runCliCommand(
+    return await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: ['branch', '-D', branchName,],
       workingDirectory: workingDirectory,
@@ -221,7 +225,7 @@ class GitCli {
     String branchName,
     String workingDirectory,
   ) async {
-    return await CliCommand.runCliCommand(
+    return await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: ['push', 'origin', '--delete', branchName],
     );

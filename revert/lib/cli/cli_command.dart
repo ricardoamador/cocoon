@@ -5,8 +5,11 @@
 import 'dart:io';
 
 class CliCommand {
+
+  CliCommand();
+
   /// Method runs a single git command in a shell.
-  static Future<ProcessResult> runCliCommand({
+  Future<ProcessResult> runCliCommand({
     required String executable,
     required List<String> arguments,
     bool throwOnError = true,

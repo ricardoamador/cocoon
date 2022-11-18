@@ -5,6 +5,7 @@
 import 'dart:io';
 
 import 'package:github/github.dart';
+import 'package:revert/cli/cli_command.dart';
 import 'package:revert/repository/git_cli.dart';
 import 'package:revert/repository/git_access_method.dart';
 import 'package:test/test.dart';
@@ -15,7 +16,7 @@ void main() {
       final String workingDirectory = '${Directory.current.path}/test/repository';
       final RepositorySlug repositorySlug = RepositorySlug('ricardoamador', 'flutter_test');
 
-      final GitCli gitCli = GitCli(GitAccessMethod.SSH);
+      final GitCli gitCli = GitCli(GitAccessMethod.SSH, CliCommand());
       final ProcessResult processResultClone = await gitCli.cloneRepository(repositorySlug, workingDirectory);
       expect(processResultClone.exitCode, isZero);
 

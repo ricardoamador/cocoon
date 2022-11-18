@@ -15,7 +15,8 @@ void main() {
         executable = 'dir';
       }
 
-      final ProcessResult processResult = await CliCommand.runCliCommand(executable: executable, arguments: []);
+      final CliCommand cliCommand = CliCommand();
+      final ProcessResult processResult = await cliCommand.runCliCommand(executable: executable, arguments: []);
       expect(processResult.exitCode, isZero);
     });
   });
