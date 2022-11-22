@@ -6,7 +6,7 @@ import 'package:revert/cli/cli_command.dart';
 import 'package:revert/model/auto_submit_query_result.dart';
 import 'package:revert/repository/git_cli.dart';
 import 'package:revert/repository/git_access_method.dart';
-import 'package:revert/repository/git_clone_manager.dart';
+import 'package:revert/repository/git_repository_manager.dart';
 import 'package:revert/request_handling/pubsub.dart';
 import 'package:revert/service/approver_service.dart';
 import 'package:revert/service/config.dart';
@@ -18,13 +18,13 @@ import 'package:revert/service/graphql_service.dart';
 class RevertService {
   Config config;
   ApproverService? approverService;
-  late GitCloneManager gitCloneManager;
+  late GitRepositoryManager gitCloneManager;
   late GitCli gitCli;
 
   RevertService(this.config) {
     approverService = ApproverService(config);
     gitCli = GitCli(GitAccessMethod.SSH, CliCommand());
-    gitCloneManager = GitCloneManager(gitCli);
+    // gitCloneManager = RepositoryManager(gitCli);
   }
 
   /// Processes a pub/sub message associated with PullRequest event.
@@ -73,7 +73,6 @@ class RevertService {
     required String ackId,
     required PubSub pubsub,
   }) async {
-    
     // Two types of requests based on revert label can be handled
     // revert on a closed issue is to generate the revert commit and push it to github.
     //    bot will add another label to the newly opened pr 'bot-revert'
@@ -84,19 +83,19 @@ class RevertService {
     // 2. use the commit has from the pull request and revert that using git revert $sha.
 
     // 3. use git commit -m 'Revert message.'
-    
+
     // 4. git push origin HEAD.
-    
+
     // 5. open a pull request with the change branch.
-    
+
     // 6. cleanup the disk.
-    
+
     // 7. auto approve the pull request with the bot.
-    
+
     // 8. merge the pull request.
-    
+
     // 9. open the follow up review issue.
-    
+
     // 10. notify the discrod tree-status channel.
   }
 

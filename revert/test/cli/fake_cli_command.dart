@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:revert/cli/cli_command.dart';
 
 class FakeCliCommand extends CliCommand {
-
   FakeCliCommand();
 
   late ProcessResult processResult;

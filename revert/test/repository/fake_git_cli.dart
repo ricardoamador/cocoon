@@ -28,7 +28,12 @@ class FakeGitCli extends GitCli {
   }
 
   @override
-  Future<ProcessResult> cloneRepository(gh.RepositorySlug slug, String? workingDirectory,) async {
+  Future<ProcessResult> cloneRepository({
+    required gh.RepositorySlug slug,
+    required String workingDirectory,
+    required String targetDirectory,
+    List<String>? options,
+  }) async {
     return _handleCall();
   }
 

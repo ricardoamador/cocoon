@@ -37,31 +37,45 @@ class GitCli {
     _cliCommand = cliCommand;
   }
 
-
   /// Check to see if the current directory is a git repository.
   Future<bool> isGitRepository(String directory) async {
     final ProcessResult processResult = await _cliCommand.runCliCommand(
       executable: GIT,
-      arguments: ['-C', directory, 'rev-parse',],
+      arguments: [
+        '-C',
+        directory,
+        'rev-parse',
+      ],
       throwOnError: true,
     );
     return processResult.exitCode == 0;
   }
 
-
   /// Checkout repository if it does not currently exist on disk.
   /// We will need to protect against multiple checkouts just in case multiple
   /// calls occur at the same time.
-  Future<ProcessResult> cloneRepository(RepositorySlug slug, String? workingDirectory,) async {
+  Future<ProcessResult> cloneRepository({
+    required RepositorySlug slug,
+    required String workingDirectory,
+    required String targetDirectory,
+    List<String>? options,
+  }) async {
+    final List<String> clone = [
+      'clone',
+      '$repositoryPrefix${slug.fullName}',
+      targetDirectory,
+    ];
+    if (options != null) {
+      clone.addAll(options);
+    }
     final ProcessResult processResult = await _cliCommand.runCliCommand(
       executable: GIT,
-      arguments: ['clone', '$repositoryPrefix${slug.fullName}'],
+      arguments: clone,
       workingDirectory: workingDirectory,
     );
 
     return processResult;
   }
-
 
   /// This is necessary with forked repos but may not be necessary with the bot
   /// as the bot has direct access to the repository.
@@ -91,7 +105,6 @@ class GitCli {
     );
   }
 
-
   /// Fetch all new refs for the repository.
   Future<ProcessResult> fetchAll(String workingDirectory) async {
     return await _cliCommand.runCliCommand(
@@ -100,16 +113,13 @@ class GitCli {
     );
   }
 
-
   Future<ProcessResult> pullRebase(String? workingDirectory) async {
     return _updateRepository(workingDirectory, '--rebase');
   }
 
-
   Future<ProcessResult> pullMerge(String? workingDirectory) async {
     return _updateRepository(workingDirectory, '--merge');
   }
-
 
   /// Run the git pull rebase command to keep the repository up to date.
   Future<ProcessResult> _updateRepository(
@@ -123,7 +133,6 @@ class GitCli {
     );
     return processResult;
   }
-
 
   /// Checkout and create a branch for the current edit.
   ///
@@ -158,7 +167,6 @@ class GitCli {
     );
   }
 
-
   /// Revert a pull request commit.
   Future<ProcessResult> revertChange({
     required String branchName,
@@ -191,7 +199,6 @@ class GitCli {
     );
   }
 
-
   /// Push changes made to the local branch to github.
   Future<ProcessResult> pushBranch(
     String branchName,
@@ -204,7 +211,6 @@ class GitCli {
     );
   }
 
-
   /// Delete a local branch from the repo.
   Future<ProcessResult> deleteLocalBranch(
     String branchName,
@@ -212,15 +218,18 @@ class GitCli {
   ) async {
     return await _cliCommand.runCliCommand(
       executable: GIT,
-      arguments: ['branch', '-D', branchName,],
+      arguments: [
+        'branch',
+        '-D',
+        branchName,
+      ],
       workingDirectory: workingDirectory,
     );
   }
 
-
-  /// Delete a remote branch from the repo. 
-  /// 
-  /// When merging a pull request the pr branch is not automatically deleted. 
+  /// Delete a remote branch from the repo.
+  ///
+  /// When merging a pull request the pr branch is not automatically deleted.
   Future<ProcessResult> deleteRemoteBranch(
     String branchName,
     String workingDirectory,
@@ -228,6 +237,33 @@ class GitCli {
     return await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: ['push', 'origin', '--delete', branchName],
+    );
+  }
+
+  /// Get the remote origin of the current repository.
+  Future<ProcessResult> showOriginUrl(
+    RepositorySlug slug,
+    String workingDirectory,
+  ) async {
+    return await _cliCommand.runCliCommand(
+      executable: GIT,
+      arguments: ['config', '--get', 'remote.origin.url'],
+      workingDirectory: workingDirectory,
+    );
+  }
+
+  Future<ProcessResult> switchBranch(
+    RepositorySlug slug,
+    String workingDirectory,
+    String branchName,
+  ) async {
+    return await _cliCommand.runCliCommand(
+      executable: GIT,
+      arguments: [
+        'switch',
+        'branchName',
+      ],
+      workingDirectory: workingDirectory,
     );
   }
 }

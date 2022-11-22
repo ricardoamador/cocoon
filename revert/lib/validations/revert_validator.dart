@@ -4,7 +4,6 @@ import 'package:github/github.dart' as gh;
 import 'validation.dart';
 
 class RevertValidator extends Validation {
-
   RevertValidator({
     required super.config,
   });
@@ -16,6 +15,5 @@ class RevertValidator extends Validation {
 
   // perform a diff to see if the revert is even needed in the first place.
   // when attempting to revert mulitple times github knew the changes were the same
-
 
 }

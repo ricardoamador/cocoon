@@ -5,7 +5,6 @@
 import 'dart:io';
 
 class CliCommand {
-
   CliCommand();
 
   /// Method runs a single git command in a shell.
