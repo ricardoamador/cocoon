@@ -14,6 +14,8 @@ class GitRepositoryManager {
   final RepositorySlug slug;
   final GitCli gitCli;
 
+  late String targetCloneDirectory;
+
   /// RepositoryManager will perform clone, revert and delete on the repository
   /// in the working directory that is cloned to [cloneToDirectory].
   ///
@@ -28,6 +30,7 @@ class GitRepositoryManager {
     required this.gitCli,
   }) {
     cloneToDirectory ??= slug.name;
+    targetCloneDirectory = '$workingDirectory/$cloneToDirectory';
   }
 
   /// Clone the repository identified by the slug.
@@ -36,7 +39,6 @@ class GitRepositoryManager {
   /// of this class attempting to clone the same repository.
   /// Note that thread safety is not guaranteed.
   Future<bool> cloneRepository() async {
-    final String targetCloneDirectory = '$workingDirectory/$cloneToDirectory';
     // Use double checked locking, this is safe enough as reverts do not happen
     // often enough that we would not be able to handle multiple requests.
     // final String targetCloneDirectory = '$workingDirectory/${slug.name}';
@@ -60,12 +62,12 @@ class GitRepositoryManager {
     );
 
     if (processResult.exitCode != 0) {
-      log.severe('An error has occurred cloning repository ${slug.fullName} to dir $workingDirectory');
-      log.info('${slug.fullName}, $workingDirectory: stdout: ${processResult.stdout}');
-      log.info('${slug.fullName}, $workingDirectory: stderr: ${processResult.stderr}');
+      log.severe('An error has occurred cloning repository ${slug.fullName} to dir $targetCloneDirectory');
+      log.severe('${slug.fullName}, $targetCloneDirectory: stdout: ${processResult.stdout}');
+      log.severe('${slug.fullName}, $targetCloneDirectory: stderr: ${processResult.stderr}');
       return false;
     } else {
-      log.info('${slug.fullName} was cloned successfully to dir $workingDirectory');
+      log.info('${slug.fullName} was cloned successfully to directory $targetCloneDirectory');
       return true;
     }
   }
@@ -78,24 +80,22 @@ class GitRepositoryManager {
   Future<void> revertCommit(String baseBranchName, String commitSha) async {
     final GitRevertBranchName revertBranchName = GitRevertBranchName(commitSha);
     // Working directory for these must be repo checkout directory.
-    await gitCli.fetchAll(workingDirectory);
-    await gitCli.pullRebase(workingDirectory);
+    log.info('Running fetch ');
+    await gitCli.fetchAll(targetCloneDirectory);
+    await gitCli.pullRebase(targetCloneDirectory);
     await gitCli.createBranch(
-      baseBranchName: baseBranchName,
       newBranchName: revertBranchName.branch,
-      workingDirectory: workingDirectory,
+      workingDirectory: targetCloneDirectory,
     );
     await gitCli.revertChange(
-      branchName: revertBranchName.branch,
       commitSha: commitSha,
-      workingDirectory: workingDirectory,
+      workingDirectory: targetCloneDirectory,
     );
-    await gitCli.pushBranch(revertBranchName.branch, workingDirectory);
+    await gitCli.pushBranch(revertBranchName.branch, targetCloneDirectory);
   }
 
   /// Delete the repository managed by this instance.
   Future<void> deleteRepository() async {
-    final String targetCloneDirectory = '$workingDirectory/${slug.name}';
     if (Directory(targetCloneDirectory).existsSync()) {
       Directory(targetCloneDirectory).deleteSync(recursive: true);
     }

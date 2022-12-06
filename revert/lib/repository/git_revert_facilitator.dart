@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:github/github.dart' as gh;
 import 'package:revert/cli/cli_command.dart';
 import 'package:revert/repository/git_cli.dart';
@@ -26,17 +24,23 @@ class GitRevertFacilitator {
       gitCli: GitCli(GitAccessMethod.SSH, CliCommand()),
     );
 
+    final String cloneToFullPath = '$workingDirectory/${slug.name}_$commitSha';
     try {
+      log.info('Attempting to clone ${slug.fullName} to $cloneToFullPath.');
       await repositoryManager.cloneRepository();
+      log.info('Clone of ${slug.fullName} to $cloneToFullPath was successful.');
     } catch (e) {
-      log.severe('Repository was not ready or could not be cloned.');
+      log.severe('Clone of ${slug.fullName} to $cloneToFullPath was NOT successful. Reason: $e');
       return false;
     }
 
     try {
+      log.info('Attempting to revert $commitSha in ${slug.fullName}');
       await repositoryManager.revertCommit('main', commitSha);
+      log.info('Revert of $commitSha in ${slug.fullName} was successful.');
     } catch (e) {
-      log.severe('Could not generate revert request for $commitSha');
+      log.severe('Revert of $commitSha in ${slug.fullName} was NOT successful. Reason: $e');
+      return false;
     }
 
     return true;

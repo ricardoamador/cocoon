@@ -11,40 +11,59 @@ import 'package:revert/repository/git_access_method.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('Testing git command locally', () {
-    test('Checkout locally and push revert change to the repository.', () async {
-      // final String workingDirectory = '${Directory.current.path}/test/repository';
-      // final RepositorySlug repositorySlug = RepositorySlug('ricardoamador', 'flutter_test');
+  group('Testing git commands', () {
+    late CliCommand cliCommand;
+    late GitCli gitCli;
+    final String workingDirectory = '${Directory.current.path}/test/repository';
+    final String fullRepoCheckoutPath = '$workingDirectory/test_repo';
+    final RepositorySlug slug = RepositorySlug('flutter', 'test_repo');
 
-      // final GitCli gitCli = GitCli(GitAccessMethod.SSH, CliCommand());
-      // final ProcessResult processResultClone =
-      //     await gitCli.cloneRepository(repositorySlug, workingDirectory: workingDirectory);
-      // expect(processResultClone.exitCode, isZero);
+    late ProcessResult initProcessResult;
 
-      // const String branchName = 'ra_test';
-      // final String newWorkingDirectory = '$workingDirectory/flutter_test';
-      // final ProcessResult processResultNewBranch = await gitCli.createBranch(
-      //     baseBranchName: 'main', newBranchName: branchName, workingDirectory: newWorkingDirectory);
-      // expect(processResultNewBranch.exitCode, isZero);
+    setUp(() async {
+      cliCommand = CliCommand();
+      gitCli = GitCli(GitAccessMethod.SSH, cliCommand);
+      initProcessResult = await cliCommand.runCliCommand(
+        executable: 'git',
+        arguments: [
+          'init',
+          slug.name,
+          '-b',
+          'main',
+        ],
+        workingDirectory: workingDirectory,
+        throwOnError: false,
+      );
+    });
 
-      // final ProcessResult processResultFetchAll = await gitCli.fetchAll(newWorkingDirectory);
-      // expect(processResultFetchAll.exitCode, isZero);
+    void validateInit() {
+      expect(initProcessResult, isNotNull);
+      expect(initProcessResult.exitCode, isZero);
+      expect(Directory(fullRepoCheckoutPath).existsSync(), isTrue);
+    }
 
-      // final ProcessResult processResultSetUpstream =
-      //     await gitCli.setUpstream(repositorySlug, branchName, newWorkingDirectory);
-      // expect(processResultSetUpstream.exitCode, isZero);
+    test('isGitRepository()', () async {
+      validateInit();
+      expect(await gitCli.isGitRepository(fullRepoCheckoutPath), isTrue);
+    });
 
-      // const String pullRequestSha = 'dd5a0ec86dfe257b323228058dde4198b2363ebc';
-      // final ProcessResult processResultCreateRevertChange = await gitCli.revertChange(
-      //   branchName: branchName,
-      //   commitSha: pullRequestSha,
-      //   workingDirectory: newWorkingDirectory,
-      // );
+    test('createBranch()', () async {
+      validateInit();
+      
+      final ProcessResult branchProcessResult = await gitCli.createBranch(
+        newBranchName: 'test_branch',
+        workingDirectory: fullRepoCheckoutPath,
+        useCheckout: true,
+      );
+      expect(branchProcessResult, isNotNull);
+      expect(branchProcessResult.exitCode, isZero);
+      
+      final ProcessResult processResult = await cliCommand.runCliCommand(executable: 'git', arguments: ['status'], workingDirectory: fullRepoCheckoutPath,);
+      expect((processResult.stdout as String).contains('On branch test_branch'), isTrue);
+    });
 
-      // expect(processResultCreateRevertChange.exitCode, isZero);
-
-      // final ProcessResult processResultPushChange = await gitCli.pushBranch(branchName, newWorkingDirectory);
-      // expect(processResultPushChange.exitCode, isZero);
+    tearDown(() async {
+      await cliCommand.runCliCommand(executable: 'rm', arguments: ['-rf', fullRepoCheckoutPath],);
     });
   });
 }

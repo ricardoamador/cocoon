@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:github/github.dart' as gh;
-import 'package:revert/repository/command_strategy.dart';
 import 'package:revert/repository/git_cli.dart';
 
 class FakeGitCli extends GitCli {
@@ -40,7 +39,6 @@ class FakeGitCli extends GitCli {
   @override
   Future<ProcessResult> setUpstream(
     gh.RepositorySlug slug,
-    String branchName,
     String workingDirectory,
   ) async {
     return _handleCall();
@@ -63,19 +61,16 @@ class FakeGitCli extends GitCli {
 
   @override
   Future<ProcessResult> createBranch({
-    required String baseBranchName,
     required String newBranchName,
-    CommandStrategy? createBranchStrategy,
     required String workingDirectory,
+    bool useCheckout = false,
   }) async {
     return _handleCall();
   }
 
   @override
   Future<ProcessResult> revertChange({
-    required String branchName,
     required String commitSha,
-    CommandStrategy? revertCommitStrategy,
     required String workingDirectory,
   }) async {
     return _handleCall();

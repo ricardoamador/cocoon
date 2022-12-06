@@ -9,7 +9,6 @@ import 'package:logging/logging.dart';
 
 import 'package:revert/cli/cli_command.dart';
 
-import 'command_strategy.dart';
 import 'git_access_method.dart';
 
 /// Class to wrap the command line calls to git.
@@ -42,12 +41,12 @@ class GitCli {
     final ProcessResult processResult = await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: [
-        '-C',
-        directory,
         'rev-parse',
       ],
-      throwOnError: true,
+      throwOnError: false,
+      workingDirectory: directory,
     );
+
     return processResult.exitCode == 0;
   }
 
@@ -81,18 +80,8 @@ class GitCli {
   /// as the bot has direct access to the repository.
   Future<ProcessResult> setUpstream(
     RepositorySlug slug,
-    String branchName,
     String workingDirectory,
   ) async {
-    await _cliCommand.runCliCommand(
-      executable: GIT,
-      arguments: [
-        'switch',
-        branchName,
-      ],
-      workingDirectory: workingDirectory,
-    );
-
     return await _cliCommand.runCliCommand(
       executable: GIT,
       arguments: [
@@ -139,62 +128,40 @@ class GitCli {
   /// TODO The strategy may be unneccessary here as the bot will not have to
   /// create its own fork of the repo.
   Future<ProcessResult> createBranch({
-    required String baseBranchName,
     required String newBranchName,
-    CommandStrategy? createBranchStrategy,
     required String workingDirectory,
+    bool useCheckout = false,
   }) async {
-    // First switch to the baseBranchName.
-    await _cliCommand.runCliCommand(
-      executable: GIT,
-      arguments: [
-        'switch',
-        baseBranchName,
-      ],
-      workingDirectory: workingDirectory,
-    );
-
     // Then create the new branch.
-    createBranchStrategy ??= CommandStrategy([
-      'checkout',
-      '-b',
-      newBranchName,
-    ]);
+    List<String> args;
+    if (useCheckout) {
+      args = ['checkout', '-b', newBranchName];
+    } else {
+      args = ['branch', newBranchName];
+    }
+
     return await _cliCommand.runCliCommand(
       executable: GIT,
-      arguments: createBranchStrategy.getCommandList,
+      arguments: args,
       workingDirectory: workingDirectory,
     );
   }
 
   /// Revert a pull request commit.
   Future<ProcessResult> revertChange({
-    required String branchName,
     required String commitSha,
-    CommandStrategy? revertCommitStrategy,
     required String workingDirectory,
   }) async {
-    // First switch to the base branch.
-    await _cliCommand.runCliCommand(
-      executable: GIT,
-      arguments: [
-        'switch',
-        branchName,
-      ],
-      workingDirectory: workingDirectory,
-    );
-
     // Issue a revert of the pull request.
-    revertCommitStrategy ??= CommandStrategy([
-      'revert',
-      '--no-edit',
-      '-m',
-      '1',
-      commitSha,
-    ]);
     return await _cliCommand.runCliCommand(
       executable: GIT,
-      arguments: revertCommitStrategy.getCommandList,
+      arguments: [
+        'revert',
+        '--no-edit',
+        '-m',
+        '1',
+        commitSha,
+      ],
       workingDirectory: workingDirectory,
     );
   }
@@ -242,7 +209,6 @@ class GitCli {
 
   /// Get the remote origin of the current repository.
   Future<ProcessResult> showOriginUrl(
-    RepositorySlug slug,
     String workingDirectory,
   ) async {
     return await _cliCommand.runCliCommand(
@@ -253,7 +219,6 @@ class GitCli {
   }
 
   Future<ProcessResult> switchBranch(
-    RepositorySlug slug,
     String workingDirectory,
     String branchName,
   ) async {
@@ -261,7 +226,7 @@ class GitCli {
       executable: GIT,
       arguments: [
         'switch',
-        'branchName',
+        branchName,
       ],
       workingDirectory: workingDirectory,
     );
