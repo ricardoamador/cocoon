@@ -81,11 +81,12 @@ class GitRepositoryManager {
     final GitRevertBranchName revertBranchName = GitRevertBranchName(commitSha);
     // Working directory for these must be repo checkout directory.
     log.info('Running fetch ');
-    await gitCli.fetchAll(targetCloneDirectory);
-    await gitCli.pullRebase(targetCloneDirectory);
+    // await gitCli.fetchAll(targetCloneDirectory);
+    // await gitCli.pullRebase(targetCloneDirectory);
     await gitCli.createBranch(
       newBranchName: revertBranchName.branch,
       workingDirectory: targetCloneDirectory,
+      useCheckout: true,
     );
     await gitCli.revertChange(
       commitSha: commitSha,

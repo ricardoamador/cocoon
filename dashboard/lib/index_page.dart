@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'logic/links.dart';
-import 'navigation_drawer.dart';
+import 'navigation_drawer.dart' as nav;
 import 'state/index.dart';
 import 'widgets/app_bar.dart';
 import 'widgets/error_brook_watcher.dart';
@@ -58,7 +58,7 @@ class IndexPage extends StatelessWidget {
             ),
           ),
         ),
-        drawer: const NavigationDrawer(),
+        drawer: const nav.NavigationDrawer(),
       ),
     );
   }

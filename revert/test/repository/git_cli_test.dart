@@ -49,7 +49,7 @@ void main() {
 
     test('createBranch()', () async {
       validateInit();
-      
+
       final ProcessResult branchProcessResult = await gitCli.createBranch(
         newBranchName: 'test_branch',
         workingDirectory: fullRepoCheckoutPath,
@@ -57,13 +57,20 @@ void main() {
       );
       expect(branchProcessResult, isNotNull);
       expect(branchProcessResult.exitCode, isZero);
-      
-      final ProcessResult processResult = await cliCommand.runCliCommand(executable: 'git', arguments: ['status'], workingDirectory: fullRepoCheckoutPath,);
+
+      final ProcessResult processResult = await cliCommand.runCliCommand(
+        executable: 'git',
+        arguments: ['status'],
+        workingDirectory: fullRepoCheckoutPath,
+      );
       expect((processResult.stdout as String).contains('On branch test_branch'), isTrue);
     });
 
     tearDown(() async {
-      await cliCommand.runCliCommand(executable: 'rm', arguments: ['-rf', fullRepoCheckoutPath],);
+      await cliCommand.runCliCommand(
+        executable: 'rm',
+        arguments: ['-rf', fullRepoCheckoutPath],
+      );
     });
   });
 }

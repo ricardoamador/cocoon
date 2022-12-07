@@ -2,11 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:io';
+
 import 'package:revert/exception/bigquery_exception.dart';
 import 'package:revert/model/auto_submit_query_result.dart';
 import 'package:revert/model/big_query_pull_request_record.dart';
-import 'package:revert/model/big_query_revert_request_record.dart';
+// import 'package:revert/model/big_query_revert_request_record.dart';
 import 'package:revert/model/pull_request_change_type.dart';
+import 'package:revert/repository/git_access_method.dart';
+import 'package:revert/repository/git_revert_facilitator.dart';
 import 'dart:async';
 
 import 'package:revert/service/bigquery.dart';
@@ -14,15 +18,16 @@ import 'package:revert/service/config.dart';
 import 'package:revert/service/github_service.dart';
 import 'package:revert/service/graphql_service.dart';
 import 'package:revert/service/log.dart';
-import 'package:revert/service/revert_review_template.dart';
+// import 'package:revert/service/revert_review_template.dart';
 // import 'package:revert/validations/revert.dart';
 import 'package:github/github.dart' as github;
 import 'package:graphql/client.dart' as graphql;
 import 'package:retry/retry.dart';
 
 import '../exception/retryable_exception.dart';
+import '../repository/git_revert_branch_name.dart';
 import '../request_handling/pubsub.dart';
-import '../validations/validation.dart';
+// import '../validations/validation.dart';
 import 'approver_service.dart';
 
 /// Provides an extensible and standardized way to validate different aspects of
@@ -42,8 +47,10 @@ class ValidationService {
   /// Processes a pub/sub message associated with PullRequest event.
   Future<void> processMessage(github.PullRequest messagePullRequest, String ackId, PubSub pubsub) async {
     final github.RepositorySlug slug = messagePullRequest.base!.repo!.slug();
-    final GithubService gitHubService = await config.createGithubService(slug);
-    final github.PullRequest currentPullRequest = await gitHubService.getPullRequest(slug, messagePullRequest.number!);
+    final GithubService githubService = await config.createGithubService(slug);
+
+    final github.PullRequest currentPullRequest = await githubService.getPullRequest(slug, messagePullRequest.number!);
+
     final List<String> labelNames = (currentPullRequest.labels as List<github.IssueLabel>)
         .map<String>((github.IssueLabel labelMap) => labelMap.name)
         .toList();
@@ -85,6 +92,60 @@ class ValidationService {
     required String ackId,
     required PubSub pubsub,
   }) async {
+    //TODO remove later
+    log.info('working in directory ${Directory.current.path}');
+    final github.RepositorySlug slug = messagePullRequest.base!.repo!.slug();
+
+    // Create the revert request and push it. This does not open the pull
+    // request on the github side.
+    final GitRevertBranchName revertBranchName = GitRevertBranchName(messagePullRequest.mergeCommitSha!);
+    final GitRevertFacilitator gitRevertFacilitator = GitRevertFacilitator();
+    final int prNumber = messagePullRequest.number!;
+
+    try {
+      await gitRevertFacilitator.processRevertRequest(
+        slug,
+        Directory.current.path,
+        GitAccessMethod.HTTP,
+        messagePullRequest.mergeCommitSha!,
+      );
+    } catch (e) {
+      final String message = 'Unable to generate revert request for ${messagePullRequest.mergeCommitSha!}; Error: $e';
+      log.severe(message);
+      await removeLabelAndComment(
+        githubService: await config.createGithubService(slug),
+        repositorySlug: slug,
+        prNumber: prNumber,
+        prLabel: Config.kRevertLabel,
+        message: message,
+      );
+    }
+
+    // We will now be working on a new pull request for the revert.
+    final GithubService githubService = await config.createGithubService(slug);
+
+    final String title = 'Revert "${messagePullRequest.title}"';
+    final github.PullRequest pullRequest = await githubService.createPullRequest(slug, head: revertBranchName.branch, base: 'main', title,);
+
+    // Automatically approve the new pull request.
+    await approverService!.revertApproval(result, pullRequest);
+
+    final ProcessMergeResult processed = await processMerge(
+      githubService: await config.createGithubService(slug),
+      config: config,
+      queryResult: result,
+      messagePullRequest: messagePullRequest,
+    );
+
+    if (processed.result) {
+      log.info('Attempting to insert a revert pull request record into the database for pr# $prNumber');
+      await insertPullRequestRecord(
+        config: config,
+        pullRequest: messagePullRequest,
+        pullRequestType: PullRequestChangeType.revert,
+      );
+    }
+
 //     final ValidationResult revertValidationResult = await revertValidation!.validate(result, messagePullRequest);
 
 //     final github.RepositorySlug slug = messagePullRequest.base!.repo!.slug();
@@ -180,8 +241,8 @@ class ValidationService {
 //       log.info('The pr ${slug.fullName}/$prNumber is not feasible for merge and message: $ackId is acknowledged.');
 //     }
 
-//     log.info('Ack the processed message : $ackId.');
-//     await pubsub.acknowledge('auto-submit-queue-sub', ackId);
+    log.info('Ack the processed message : $ackId.');
+    await pubsub.acknowledge('auto-submit-queue-sub', ackId);
   }
 
   /// Merges the commit if the PullRequest passes all the validations.

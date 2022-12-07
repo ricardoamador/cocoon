@@ -58,15 +58,15 @@ Future<void> main() async {
         ReadinessCheckHandler(
           config: config,
         ).run,
-      )
-      ..get(
-        // Update revert tracking review issue metrics.
-        '/update-revert-issues',
-        UpdateRevertIssuesHandler(
-          config: config,
-          cronAuthProvider: authProvider,
-        ).run,
       );
+      // ..get(
+      //   // Update revert tracking review issue metrics.
+      //   '/update-revert-issues',
+      //   UpdateRevertIssuesHandler(
+      //     config: config,
+      //     cronAuthProvider: authProvider,
+      //   ).run,
+      // );
     await serveHandler(router);
   });
 }

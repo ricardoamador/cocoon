@@ -15,5 +15,4 @@ class RevertValidator extends Validation {
 
   // perform a diff to see if the revert is even needed in the first place.
   // when attempting to revert mulitple times github knew the changes were the same
-
 }

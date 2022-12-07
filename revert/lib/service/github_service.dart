@@ -92,6 +92,23 @@ class GithubService {
     return await github.issues.get(slug, issueNumber);
   }
 
+  /// Create a pull request in the repository specified in the RepositorySlug.
+  Future<PullRequest> createPullRequest(
+    RepositorySlug slug,
+    String title, {
+    String? head,
+    String? base,
+    String? body,
+  }) async {
+    final CreatePullRequest createPullRequest = CreatePullRequest(
+      title,
+      head,
+      base,
+      body: body,
+    );
+    return await github.pullRequests.create(slug, createPullRequest);
+  }
+
   /// Fetches the specified pull request.
   Future<PullRequest> getPullRequest(RepositorySlug slug, int pullRequestNumber) async {
     return await github.pullRequests.get(slug, pullRequestNumber);
@@ -101,12 +118,20 @@ class GithubService {
   ///
   /// The response will include details on the files that were changed between the two commits.
   /// Relevant APIs: https://docs.github.com/en/rest/reference/commits#compare-two-commits
-  Future<GitHubComparison> compareTwoCommits(RepositorySlug slug, String refBase, String refHead) async {
+  Future<GitHubComparison> compareTwoCommits(
+    RepositorySlug slug,
+    String refBase,
+    String refHead,
+  ) async {
     return await github.repositories.compareCommits(slug, refBase, refHead);
   }
 
   /// Removes a lable for a pull request.
-  Future<bool> removeLabel(RepositorySlug slug, int issueNumber, String label) async {
+  Future<bool> removeLabel(
+    RepositorySlug slug,
+    int issueNumber,
+    String label,
+  ) async {
     return await github.issues.removeLabelForIssue(slug, issueNumber, label);
   }
 
@@ -162,7 +187,11 @@ class GithubService {
 
   /// Compare the filesets of the current pull request and the original pull
   /// request that is being reverted.
-  Future<bool> comparePullRequests(RepositorySlug repositorySlug, PullRequest revert, PullRequest current) async {
+  Future<bool> comparePullRequests(
+    RepositorySlug repositorySlug,
+    PullRequest revert,
+    PullRequest current,
+  ) async {
     final List<PullRequestFile> originalPullRequestFiles = await getPullRequestFiles(repositorySlug, revert);
     final List<PullRequestFile> currentPullRequestFiles = await getPullRequestFiles(repositorySlug, current);
 

@@ -5,6 +5,8 @@ import 'package:revert/cli/cli_command.dart';
 import 'package:revert/repository/git_access_method.dart';
 import 'package:revert/repository/git_cli.dart';
 import 'package:revert/repository/git_repository_manager.dart';
+import 'package:revert/repository/git_revert_branch_name.dart';
+import 'package:revert/service/github_service.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -19,7 +21,7 @@ void main() {
 
     final GitRepositoryManager gitCloneManager = GitRepositoryManager(
       slug: slug,
-      workingDirectory: workingDirectoryOutside,
+      workingDirectory: workingDirectory,
       cloneToDirectory: 'flutter_test',
       gitCli: gitCli,
     );
@@ -46,9 +48,15 @@ void main() {
       expect(Directory(targetRepoCheckoutDirectory).existsSync(), isFalse);
     });
 
-    test('revertCommit()', () async {
+    // test('Create revert request and push to github.',() async {
+    //   const String commitSha = '26a2304c62de558920657bd1839008e19991e1d8';
+    //   const GitRevertBranchName gitRevertBranchName = GitRevertBranchName(commitSha);
+    //   await gitCloneManager.cloneRepository();
+    //   await gitCloneManager.revertCommit('main', commitSha);
+    //   await gitCloneManager.deleteRepository();
+    // });
 
-    });
+    test('revertCommit()', () async {});
 
     tearDown(() async {
       await cliCommand.runCliCommand(executable: 'rm', arguments: ['-rf', targetRepoCheckoutDirectory]);

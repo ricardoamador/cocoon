@@ -313,4 +313,10 @@ class FakeGithubService implements GithubService {
       assert(expected[key] == value);
     });
   }
+  
+  @override
+  Future<PullRequest> createPullRequest(RepositorySlug slug, String title, {String? head, String? base, String? body}) {
+    // TODO: implement createPullRequest
+    throw UnimplementedError();
+  }
 }
