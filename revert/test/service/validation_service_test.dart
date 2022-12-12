@@ -58,34 +58,34 @@ void main() {
     });
   });
 
-  test('Remove label and post comment when no revert label.', () async {
-    final PullRequestHelper flutterRequest = PullRequestHelper(
-      prNumber: 0,
-      lastCommitHash: oid,
-      reviews: <PullRequestReviewHelper>[],
-    );
-    githubService.checkRunsData = checkRunsMock;
-    githubService.createCommentData = createCommentMock;
-    final FakePubSub pubsub = FakePubSub();
-    final PullRequest pullRequest = generatePullRequest(
-      prNumber: 0,
-      repoName: slug.name,
-    );
-    unawaited(pubsub.publish('auto-submit-queue-sub', pullRequest));
-    final auto.QueryResult queryResult = createQueryResult(flutterRequest);
+  // test('Remove label and post comment when no revert label.', () async {
+  //   final PullRequestHelper flutterRequest = PullRequestHelper(
+  //     prNumber: 0,
+  //     lastCommitHash: oid,
+  //     reviews: <PullRequestReviewHelper>[],
+  //   );
+  //   githubService.checkRunsData = checkRunsMock;
+  //   githubService.createCommentData = createCommentMock;
+  //   final FakePubSub pubsub = FakePubSub();
+  //   final PullRequest pullRequest = generatePullRequest(
+  //     prNumber: 0,
+  //     repoName: slug.name,
+  //   );
+  //   unawaited(pubsub.publish('auto-submit-queue-sub', pullRequest));
+  //   final auto.QueryResult queryResult = createQueryResult(flutterRequest);
 
-    await validationService.processRevertRequest(
-      config: config,
-      result: queryResult,
-      messagePullRequest: pullRequest,
-      ackId: 'test',
-      pubsub: pubsub,
-    );
+  //   await validationService.processRevertRequest(
+  //     config: config,
+  //     result: queryResult,
+  //     messagePullRequest: pullRequest,
+  //     ackId: 'test',
+  //     pubsub: pubsub,
+  //   );
 
-    expect(githubService.issueComment, isNotNull);
-    expect(githubService.labelRemoved, true);
-    assert(pubsub.messagesQueue.isEmpty);
-  });
+  //   expect(githubService.issueComment, isNotNull);
+  //   expect(githubService.labelRemoved, true);
+  //   assert(pubsub.messagesQueue.isEmpty);
+  // });
 
   group(
     'Processing revert reqeuests.',

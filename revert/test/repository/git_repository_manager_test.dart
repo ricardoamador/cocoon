@@ -48,18 +48,18 @@ void main() {
       expect(Directory(targetRepoCheckoutDirectory).existsSync(), isFalse);
     });
 
-    // test('Create revert request and push to github.',() async {
-    //   const String commitSha = '26a2304c62de558920657bd1839008e19991e1d8';
-    //   const GitRevertBranchName gitRevertBranchName = GitRevertBranchName(commitSha);
-    //   await gitCloneManager.cloneRepository();
-    //   await gitCloneManager.revertCommit('main', commitSha);
-    //   await gitCloneManager.deleteRepository();
-    // });
+    test('Create revert request and push to github.',() async {
+      const String commitSha = '26a2304c62de558920657bd1839008e19991e1d8';
+      const GitRevertBranchName gitRevertBranchName = GitRevertBranchName(commitSha);
+      await gitCloneManager.cloneRepository();
+      await gitCloneManager.revertCommit('main', commitSha);
+      await gitCloneManager.deleteRepository();
+    });
 
     test('revertCommit()', () async {});
 
     tearDown(() async {
       await cliCommand.runCliCommand(executable: 'rm', arguments: ['-rf', targetRepoCheckoutDirectory]);
     });
-  });
+  }, skip: true,);
 }

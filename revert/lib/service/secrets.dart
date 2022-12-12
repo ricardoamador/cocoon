@@ -23,7 +23,7 @@ abstract class SecretManager {
 class CloudSecretManager implements SecretManager {
   CloudSecretManager();
 
-  final String projectId = Platform.environment['APPLICATION_ID'] ?? 'flutter-dashboard';
+  final String projectId = Platform.environment['APPLICATION_ID'] ?? 'flutter-dashboard-dev';
 
   @override
   Future<String> get(
@@ -34,8 +34,7 @@ class CloudSecretManager implements SecretManager {
     final SecretPayload? payload = (await api.projects.secrets.versions.access(
       'projects/$projectId/secrets/$key/versions/latest',
       $fields: fields,
-    ))
-        .payload;
+    )).payload;
     if (payload?.data == null) {
       throw SecretManagerException('Failed to find secret for $key with \$fields=$fields');
     }

@@ -38,14 +38,6 @@ Future<void> main() async {
           config: config,
         ).post,
       )
-      // Revert pull requests.
-      // ..get(
-      //   '/revert',
-      //   CheckPullRequest(
-      //     config: config,
-      //     cronAuthProvider: authProvider,
-      //   ).run,
-      // )
       ..get(
         '/check-pull-request',
         CollectPullRequestsHandler(
@@ -59,14 +51,6 @@ Future<void> main() async {
           config: config,
         ).run,
       );
-      // ..get(
-      //   // Update revert tracking review issue metrics.
-      //   '/update-revert-issues',
-      //   UpdateRevertIssuesHandler(
-      //     config: config,
-      //     cronAuthProvider: authProvider,
-      //   ).run,
-      // );
     await serveHandler(router);
   });
 }

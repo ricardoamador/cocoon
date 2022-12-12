@@ -50,7 +50,8 @@ class Config {
   );
 
   static const String flutter = 'flutter';
-  static const String flutterGcpProjectId = 'flutter-dashboard';
+  //TODO reset this as this project id is only for testing purposes.
+  static const String flutterGcpProjectId = 'flutter-dashboard-dev';
 
   final CacheProvider cacheProvider;
   final HttpProvider httpProvider;
