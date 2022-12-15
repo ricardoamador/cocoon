@@ -38,11 +38,14 @@ class CollectPullRequestsHandler extends AuthenticatedRequestHandler {
   Future<Response> get() async {
     final Set<int> processingLog = <int>{};
     final ApproverService approver = approverProvider(config);
+    log.info('Pulling messages from github.');
     final List<pub.ReceivedMessage> messageList = await pullMessages();
+    
     if (messageList.isEmpty) {
       log.info('No messages are pulled.');
       return Response.ok('No messages are pulled.');
-    }
+    } 
+
     log.info('Processing ${messageList.length} messages');
     final ValidationService validationService = ValidationService(config);
     final List<Future<void>> futures = <Future<void>>[];
@@ -61,8 +64,10 @@ class CollectPullRequestsHandler extends AuthenticatedRequestHandler {
         await pubsub.acknowledge('revert-queue-sub', message.ackId!);
         continue;
       } else {
-        await approver.autoApproval(pullRequest);
-        log.info('Approved pull request: $rawBody');
+        // TODO: remove, do not need to do this here as the approval comes later.
+        // await approver.autoApproval(pullRequest);
+        // log.info('Approved pull request: $rawBody');
+        log.info('Adding pull request for processing. pull request $rawBody');
         processingLog.add(pullRequest.number!);
       }
 

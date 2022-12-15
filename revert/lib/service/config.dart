@@ -30,10 +30,10 @@ class Config {
   });
 
   // List of environment variable keys related to the Github app authentication.
-  static const String kGithubKey = 'AUTO_SUBMIT_GITHUB_KEY';
-  static const String kGithubAppId = 'AUTO_SUBMIT_GITHUB_APP_ID';
-  static const String kWebHookKey = 'AUTO_SUBMIT_WEBHOOK_TOKEN';
-  static const String kFlutterGitHubBotKey = 'AUTO_SUBMIT_FLUTTER_GITHUB_TOKEN';
+  static const String kGithubKey = 'REVERT_GITHUB_KEY';
+  static const String kGithubAppId = 'REVERT_GITHUB_APP_ID';
+  static const String kWebHookKey = 'REVERT_WEBHOOK_TOKEN';
+  static const String kFlutterGitHubBotKey = 'REVERT_FLUTTER_GITHUB_TOKEN';
   static const String kAutosubmitLabel = 'autosubmit';
   static const String kRevertLabel = 'revert';
 

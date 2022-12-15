@@ -40,9 +40,11 @@ class GithubWebhookHandler extends RequestHandler {
     final List<int> requestBytes = await request.read().expand((_) => _).toList();
     final String? hmacSignature = request.headers['X-Hub-Signature'];
     //TODO disable security to see if we can bypass for testing purposes.
-    // if (!await _validateRequest(hmacSignature, requestBytes)) {
-    //   throw const Forbidden();
-    // }
+    if (!await _validateRequest(hmacSignature, requestBytes)) {
+      throw const Forbidden();
+    } else {
+      log.info('Webhook call request validated successfully!');
+    }
 
     bool hasRevertLabel = false;
     final String rawBody = utf8.decode(requestBytes);

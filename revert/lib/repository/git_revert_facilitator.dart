@@ -21,7 +21,7 @@ class GitRevertFacilitator {
       workingDirectory: workingDirectory,
       //flutter_453a23
       cloneToDirectory: '${slug.name}_$commitSha',
-      gitCli: GitCli(GitAccessMethod.SSH, CliCommand()),
+      gitCli: GitCli(gitAccessMethod, CliCommand()),
     );
 
     // final String cloneToFullPath = '$workingDirectory/${slug.name}_$commitSha';

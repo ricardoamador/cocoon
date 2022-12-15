@@ -1,0 +1,6 @@
+# test cron file for deploying the check pull requests trigger for testing.
+cron:
+# - description: check pull request in auto submit bot
+#   url: /check-pull-request
+#   target: revert
+#   schedule: every 1 minutes

@@ -45,12 +45,17 @@ class ValidationService {
   final RetryOptions retryOptions;
 
   /// Processes a pub/sub message associated with PullRequest event.
-  Future<void> processMessage(github.PullRequest messagePullRequest, String ackId, PubSub pubsub) async {
+  Future<void> processMessage(github.PullRequest messagePullRequest, String ackId, PubSub pubsub,) async {
     final github.RepositorySlug slug = messagePullRequest.base!.repo!.slug();
+    // TODO remove after testing.
+    log.info('Creating github service to access repository ${slug.fullName}');
     final GithubService githubService = await config.createGithubService(slug);
+
+    log.info('Getting pull request info for pr# ${messagePullRequest.number}');
 
     final github.PullRequest currentPullRequest = await githubService.getPullRequest(slug, messagePullRequest.number!);
 
+    log.info('Verifying labels on pull request pr# ${messagePullRequest.number}.');
     final List<String> labelNames = (currentPullRequest.labels as List<github.IssueLabel>)
         .map<String>((github.IssueLabel labelMap) => labelMap.name)
         .toList();
@@ -59,6 +64,7 @@ class ValidationService {
     if (currentPullRequest.state == 'closed' &&
         currentPullRequest.merged! &&
         labelNames.contains(Config.kRevertLabel)) {
+          log.info('Attempting to process found revert request with pr# ${currentPullRequest.number}.');
       await processRevertRequest(
         config: config,
         result: await getNewestPullRequestInfo(config, messagePullRequest),
@@ -66,6 +72,8 @@ class ValidationService {
         ackId: ackId,
         pubsub: pubsub,
       );
+    } else {
+      log.info('Ignoring pull request, label and status requirements not met.');
     }
   }
 
