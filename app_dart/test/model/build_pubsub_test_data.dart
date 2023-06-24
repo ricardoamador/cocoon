@@ -318,6 +318,13 @@ const String buildJson = '''
 }
 ''';
 
+const String buildPubsubV2Json = '''
+{
+  "build": $buildJson,
+  "buildLargeFields": "eJysUkFr1EAYbbJLdvva7rpDW2wsKLIXA+ni/oKqLVKsVbRevAzJ5DOdNpnEmUm1HkT8Df4Af5MgCAVPQkEUEQQ9eJBtk1YE8WKO73vv5eXlPfvi4ZOH120Mh3Els2QkdnSRyyrnlow1/BgkzUWhHsmUfW8F31r42kLvj8P7VnDYwk8XaA5JzD67wUcXRy46pKyWZNihO37n4q0bvHHx4IwrE3YzWEcPXlyJPbKs7btCYhmdmsEGfj+PRBjpPNSUhQntYwGdUhe7JCyD321y44eD2cbXlCTYkRN8cHARcw2a6qIqWc+fbTQrE7shevSURGVloXheJMSYf+7Gndt3NzbX+bWtNb69fn8bO1jMKI3EAT8tqm5gK9jEEuaisswOasyw7thD23fzGEt1qoY+7XfuUUaRIczDq8Hfv+MqFuo3pSKTpGyjPB8s/kXyEDNnjRp2a7yB/1brKwf9eiKaTgKxF07wHAO0d4vYsOnB1ORZLVaxgn5OVktheGN1wV9qrMJGH9YkLKBvRKQSKg03pPdJM/eSg8voSmVspASxRX9exxSeelhdGUsJHuPKUJOQJXFSqVQ00mSqzCbxaDJgXmoypGw0+atsLbiOAWZEkVW54nt0YJg7nkKIueNJSJWegMtjH13fMzaylUHPn91fOTYzlbT07yUtwzuJNFmQeRLpXKp0ZGyUSpW+dKZ+BQAA//89mRRI"
+}
+''';
+
 String stripJson(String json) {
   return json.replaceAll(' ', '').replaceAll('\n', '');
 }

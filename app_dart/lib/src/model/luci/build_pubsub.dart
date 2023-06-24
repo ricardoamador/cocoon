@@ -875,14 +875,14 @@ class Build extends JsonBody {
 class BuildV2PubSub extends JsonBody {
   const BuildV2PubSub({
     this.build,
-    String? buildLargeFields,
+    this.buildLargeFields,
     this.compression,
-  }) : rawBuildLargeFields = buildLargeFields;
+  });
 
   final Build? build;
 
   @Base64Converter()
-  final String? rawBuildLargeFields;
+  final String? buildLargeFields;
 
   final Compression? compression;
 
