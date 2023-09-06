@@ -1325,14 +1325,6 @@ void foo() {
           argThat(contains(config.missingTestsPullRequestMessageValue)),
         ),
       );
-
-      verifyNever(
-        issuesService.addLabelsToIssue(
-          Config.engineSlug,
-          issueNumber,
-          <String>['needs tests'],
-        ),
-      );
     });
 
     test('Engine does not label PR for no tests if author is skia-flutter-autoroll', () async {
@@ -1364,14 +1356,6 @@ void foo() {
           Config.engineSlug,
           issueNumber,
           argThat(contains(config.missingTestsPullRequestMessageValue)),
-        ),
-      );
-
-      verifyNever(
-        issuesService.addLabelsToIssue(
-          Config.engineSlug,
-          issueNumber,
-          <String>['needs tests'],
         ),
       );
     });
@@ -1482,6 +1466,41 @@ void foo() {
         (_) => Stream<PullRequestFile>.fromIterable(<PullRequestFile>[
           PullRequestFile()..filename = 'fml/blah.cc',
           PullRequestFile()..filename = 'fml/blah_unittests.cc',
+        ]),
+      );
+
+      await tester.post(webhook);
+
+      verifyNever(
+        issuesService.addLabelsToIssue(
+          Config.engineSlug,
+          issueNumber,
+          any,
+        ),
+      );
+
+      verifyNever(
+        issuesService.createComment(
+          Config.engineSlug,
+          issueNumber,
+          argThat(contains(config.missingTestsPullRequestMessageValue)),
+        ),
+      );
+    });
+
+    test('Engine labels PRs, no comment if py tests', () async {
+      const int issueNumber = 123;
+
+      tester.message = generateGithubWebhookMessage(
+        action: 'opened',
+        number: issueNumber,
+        slug: Config.engineSlug,
+      );
+
+      when(pullRequestsService.listFiles(Config.engineSlug, issueNumber)).thenAnswer(
+        (_) => Stream<PullRequestFile>.fromIterable(<PullRequestFile>[
+          PullRequestFile()..filename = 'tools/font-subset/main.cc',
+          PullRequestFile()..filename = 'tools/font-subset/test.py',
         ]),
       );
 
@@ -1708,6 +1727,7 @@ void foo() {
         ),
       );
     });
+
     test('Packages does not comment if Pigeon native tests', () async {
       const int issueNumber = 123;
 
@@ -1715,12 +1735,75 @@ void foo() {
         action: 'opened',
         number: issueNumber,
         slug: Config.packagesSlug,
+        baseRef: Config.defaultBranch(Config.packagesSlug),
       );
       when(pullRequestsService.listFiles(Config.packagesSlug, issueNumber)).thenAnswer(
         (_) => Stream<PullRequestFile>.fromIterable(<PullRequestFile>[
           PullRequestFile()..filename = 'packages/pigeon/lib/swift_generator.dart',
           PullRequestFile()
             ..filename = 'packages/pigeon/platform_tests/shared_test_plugin_code/lib/integration_tests.dart',
+        ]),
+      );
+
+      await tester.post(webhook);
+
+      verifyNever(
+        issuesService.createComment(
+          Config.packagesSlug,
+          issueNumber,
+          argThat(contains(config.missingTestsPullRequestMessageValue)),
+        ),
+      );
+    });
+
+    test('Packages does not comment if editing test files in go_router', () async {
+      const int issueNumber = 123;
+
+      tester.message = generateGithubWebhookMessage(
+        action: 'opened',
+        number: issueNumber,
+        slug: Config.packagesSlug,
+        baseRef: Config.defaultBranch(Config.packagesSlug),
+      );
+      when(pullRequestsService.listFiles(Config.packagesSlug, issueNumber)).thenAnswer(
+        (_) => Stream<PullRequestFile>.fromIterable(<PullRequestFile>[
+          PullRequestFile()
+            ..filename = 'packages/packages/go_router/test_fixes/go_router.dart'
+            ..additionsCount = 10,
+          PullRequestFile()
+            ..filename = 'packages/packages/go_router/lib/fix_data.yaml'
+            ..additionsCount = 10,
+        ]),
+      );
+
+      await tester.post(webhook);
+
+      verifyNever(
+        issuesService.createComment(
+          Config.packagesSlug,
+          issueNumber,
+          argThat(contains(config.missingTestsPullRequestMessageValue)),
+        ),
+      );
+    });
+
+    test('Packages does not comment if editing test files in go_router_builder', () async {
+      const int issueNumber = 123;
+
+      tester.message = generateGithubWebhookMessage(
+        action: 'opened',
+        number: issueNumber,
+        slug: Config.packagesSlug,
+        baseRef: Config.defaultBranch(Config.packagesSlug),
+      );
+      when(pullRequestsService.listFiles(Config.packagesSlug, issueNumber)).thenAnswer(
+        (_) => Stream<PullRequestFile>.fromIterable(<PullRequestFile>[
+          PullRequestFile()
+            ..filename = 'packages/packages/go_router_builder/lib/src/route_config.dart'
+            ..additionsCount = 10,
+          PullRequestFile()
+            ..filename = 'packages/packages/go_router_builder/test_inputs/bad_path_pattern.dart'
+            ..additionsCount = 10,
         ]),
       );
 
@@ -1763,14 +1846,6 @@ void foo() {
           Config.packagesSlug,
           issueNumber,
           argThat(contains(config.missingTestsPullRequestMessageValue)),
-        ),
-      ).called(1);
-
-      verify(
-        issuesService.addLabelsToIssue(
-          Config.packagesSlug,
-          issueNumber,
-          <String>['needs tests'],
         ),
       ).called(1);
     });

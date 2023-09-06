@@ -33,8 +33,7 @@ Set<RepositorySlug> kNeedsTests = <RepositorySlug>{
   Config.packagesSlug,
 };
 
-final RegExp kEngineTestRegExp = RegExp(r'(tests?|benchmarks?)\.(dart|java|mm|m|cc|sh)$');
-final List<String> kNeedsTestsLabels = <String>['needs tests'];
+final RegExp kEngineTestRegExp = RegExp(r'(tests?|benchmarks?)\.(dart|java|mm|m|cc|sh|py)$');
 
 // Extentions for files that use // for single line comments.
 // See [_allChangesAreCodeComments] for more.
@@ -258,17 +257,13 @@ class GithubWebhookSubscription extends SubscriptionHandler {
     final GitHub gitHubClient = await config.createGitHubClient(pullRequest: pr);
     await _validateRefs(gitHubClient, pr);
     if (kNeedsTests.contains(slug) && isTipOfTree) {
-      try {
-        switch (slug.name) {
-          case 'flutter':
-            return _applyFrameworkRepoLabels(gitHubClient, eventAction, pr);
-          case 'engine':
-            return _applyEngineRepoLabels(gitHubClient, eventAction, pr);
-          case 'packages':
-            return _applyPackageTestChecks(gitHubClient, eventAction, pr);
-        }
-      } finally {
-        gitHubClient.dispose();
+      switch (slug.name) {
+        case 'flutter':
+          return _applyFrameworkRepoLabels(gitHubClient, eventAction, pr);
+        case 'engine':
+          return _applyEngineRepoLabels(gitHubClient, eventAction, pr);
+        case 'packages':
+          return _applyPackageTestChecks(gitHubClient, eventAction, pr);
       }
     }
   }
@@ -304,7 +299,7 @@ class GithubWebhookSubscription extends SubscriptionHandler {
 
     if (pr.user!.login == 'fluttergithubbot') {
       needsTests = false;
-      labels.addAll(<String>['team', 'tech-debt', 'team: flakes']);
+      labels.addAll(<String>['c: tech-debt', 'c: flake']);
     }
 
     if (labels.isNotEmpty) {
@@ -399,7 +394,6 @@ class GithubWebhookSubscription extends SubscriptionHandler {
       final String body = config.missingTestsPullRequestMessage;
       if (!await _alreadyCommented(gitHubClient, pr, body)) {
         await gitHubClient.issues.createComment(slug, pr.number!, body);
-        await gitHubClient.issues.addLabelsToIssue(slug, pr.number!, kNeedsTestsLabels);
       }
     }
   }
@@ -412,7 +406,7 @@ class GithubWebhookSubscription extends SubscriptionHandler {
     return linesAdded > 0 || linesDeleted != linesTotal;
   }
 
-  // Runs automated test checks for both flutter/packages and flutter/plugins.
+  // Runs automated test checks for both flutter/packages.
   Future<void> _applyPackageTestChecks(GitHub gitHubClient, String? eventAction, PullRequest pr) async {
     final RepositorySlug slug = pr.base!.repo!.slug();
     final Stream<PullRequestFile> files = gitHubClient.pullRequests.listFiles(slug, pr.number!);
@@ -447,7 +441,10 @@ class GithubWebhookSubscription extends SubscriptionHandler {
           // Native Windows tests.
           filename.endsWith('_test.cpp') ||
           // Pigeon native tests.
-          filename.contains('/platform_tests/')) {
+          filename.contains('/platform_tests/') ||
+          // Test files in package-specific test folders.
+          filename.contains('go_router/test_fixes/') ||
+          filename.contains('go_router_builder/test_inputs/')) {
         hasTests = true;
       }
     }
@@ -461,7 +458,6 @@ class GithubWebhookSubscription extends SubscriptionHandler {
       final String body = config.missingTestsPullRequestMessage;
       if (!await _alreadyCommented(gitHubClient, pr, body)) {
         await gitHubClient.issues.createComment(slug, pr.number!, body);
-        await gitHubClient.issues.addLabelsToIssue(slug, pr.number!, kNeedsTestsLabels);
       }
     }
   }

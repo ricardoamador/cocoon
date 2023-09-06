@@ -143,6 +143,55 @@ CiYaml exampleConfig = CiYaml(
   ),
 );
 
+CiYaml exampleBackfillConfig = CiYaml(
+  slug: Config.flutterSlug,
+  branch: Config.defaultBranch(Config.flutterSlug),
+  config: pb.SchedulerConfig(
+    enabledBranches: <String>[
+      Config.defaultBranch(Config.flutterSlug),
+    ],
+    targets: <pb.Target>[
+      pb.Target(
+        name: 'Linux A',
+        scheduler: pb.SchedulerSystem.luci,
+        postsubmit: true,
+        properties: {'backfill': 'true'},
+      ),
+      pb.Target(
+        name: 'Mac A',
+        scheduler: pb.SchedulerSystem.luci,
+        postsubmit: true,
+      ),
+      pb.Target(
+        name: 'Windows A',
+        scheduler: pb.SchedulerSystem.luci,
+        postsubmit: true,
+        properties: {'backfill': 'false'},
+      ),
+    ],
+  ),
+);
+
+CiYaml examplePresubmitRescheduleConfig = CiYaml(
+  slug: Config.flutterSlug,
+  branch: Config.defaultBranch(Config.flutterSlug),
+  config: pb.SchedulerConfig(
+    enabledBranches: <String>[
+      Config.defaultBranch(Config.flutterSlug),
+    ],
+    targets: <pb.Target>[
+      pb.Target(
+        name: 'Linux A',
+      ),
+      pb.Target(
+        name: 'Linux B',
+        postsubmit: true,
+        properties: {'presubmit_retry': '1'},
+      ),
+    ],
+  ),
+);
+
 final CiYaml batchPolicyConfig = CiYaml(
   slug: Config.flutterSlug,
   branch: Config.defaultBranch(Config.flutterSlug),

@@ -28,6 +28,7 @@ targets:
     properties:
       tags: >
         ["devicelab"]
+      task_name: android_semantics_integration_test
   - name: Mac_android ignore_myflakiness
     bringup: true
     presubmit: false
@@ -36,6 +37,7 @@ targets:
       ignore_flakiness: "true"
       tags: >
         ["devicelab"]
+      task_name: ignore_myflakiness
   - name: Linux analyze
     scheduler: luci
     properties:
@@ -68,6 +70,7 @@ targets:
     properties:
       tags: >
         ["devicelab"]
+      task_name: android_semantics_integration_test
   - name: Mac_android ignore_myflakiness
     bringup: true
     presubmit: false
@@ -76,6 +79,7 @@ targets:
       ignore_flakiness: "true"
       tags: >
         ["devicelab"]
+      task_name: ignore_myflakiness
   - name: Linux analyze
     scheduler: luci
     properties:
@@ -108,6 +112,7 @@ targets:
     properties:
       tags: >
         ["devicelab"]
+      task_name: native_ui_tests_ios
 ''';
 
 const String testOwnersContent = '''
@@ -194,9 +199,8 @@ final List<BuilderRecord> semanticsIntegrationTestRecordsFailed = <BuilderRecord
 
 const String expectedSemanticsIntegrationTestOwner = 'HansMuller';
 const List<String> expectedSemanticsIntegrationTestLabels = <String>[
-  'team: flakes',
-  'severe: flake',
-  'P1',
+  'c: flake',
+  'P0',
   'framework',
 ];
 const String expectedSemanticsIntegrationTestTreeSha = 'abcdefg';
@@ -221,6 +225,7 @@ targets:
     properties:
       tags: >
         ["devicelab"]
+      task_name: android_semantics_integration_test
   - name: Mac_android ignore_myflakiness
     bringup: true
     presubmit: false
@@ -229,6 +234,7 @@ targets:
       ignore_flakiness: "true"
       tags: >
         ["devicelab"]
+      task_name: ignore_myflakiness
   - name: Linux analyze
     scheduler: luci
     properties:

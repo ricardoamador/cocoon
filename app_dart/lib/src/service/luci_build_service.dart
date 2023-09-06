@@ -62,6 +62,12 @@ class LuciBuildService {
   static const int kDefaultPriority = 30;
   static const int kRerunPriority = 29;
 
+  /// Github labels have a max length of 100, so conserve chars here.
+  /// This is currently used by packages repo only.
+  /// See: https://github.com/flutter/flutter/issues/130076
+  static const String githubBuildLabelPrefix = 'override:';
+  static const String propertiesGithubBuildLabelName = 'overrides';
+
   /// Name of the subcache to store luci build related values in redis.
   static const String subCacheName = 'luci';
 
@@ -197,6 +203,15 @@ class LuciBuildService {
       final Map<String, Object> properties = target.getProperties();
       properties.putIfAbsent('git_branch', () => pullRequest.base!.ref!.replaceAll('refs/heads/', ''));
 
+      final List<String>? labels = pullRequest.labels
+          ?.where((label) => label.name.startsWith(githubBuildLabelPrefix))
+          .map((obj) => obj.name)
+          .toList();
+
+      if (labels != null && labels.isNotEmpty) {
+        properties[propertiesGithubBuildLabelName] = labels;
+      }
+
       requests.add(
         Request(
           scheduleBuild: _createPresubmitScheduleBuild(
@@ -281,16 +296,25 @@ class LuciBuildService {
   /// The buildset, user_agent, and github_link tags are applied to match the
   /// original build. The build properties and user data from the original build
   /// are also preserved.
-  // TODO - this appears to be unused.
+  ///
+  /// The [currentAttempt] is used to track the number of current build attempt.
   Future<Build> rescheduleBuild({
-    required String commitSha,
     required String builderName,
     required push_message.BuildPushMessage buildPushMessage,
+    required int rescheduleAttempt,
   }) async {
     // Ensure we are using V2 bucket name istead of V1.
     // V1 bucket name  is "luci.flutter.prod" while the api
     // is expecting just the last part after "."(prod).
     final String bucketName = buildPushMessage.build!.bucket!.split('.').last;
+    final Map<String, List<String>> tags = <String, List<String>>{
+      'buildset': buildPushMessage.build!.tagsByName('buildset'),
+      'user_agent': buildPushMessage.build!.tagsByName('user_agent'),
+      'github_link': buildPushMessage.build!.tagsByName('github_link'),
+      'cipd_version': buildPushMessage.build!.tagsByName('cipd_version'),
+      'github_checkrun': buildPushMessage.build!.tagsByName('github_checkrun'),
+      'current_attempt': <String>[rescheduleAttempt.toString()],
+    };
     return buildBucketClient.scheduleBuild(
       ScheduleBuildRequest(
         builderId: BuilderId(
@@ -298,11 +322,7 @@ class LuciBuildService {
           bucket: bucketName,
           builder: builderName,
         ),
-        tags: <String, List<String>>{
-          'buildset': buildPushMessage.build!.tagsByName('buildset'),
-          'user_agent': buildPushMessage.build!.tagsByName('user_agent'),
-          'github_link': buildPushMessage.build!.tagsByName('github_link'),
-        },
+        tags: tags,
         properties:
             (buildPushMessage.build!.buildParameters!['properties'] as Map<String, dynamic>).cast<String, String>(),
         notify: NotificationConfig(

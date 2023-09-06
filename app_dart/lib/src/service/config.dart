@@ -46,7 +46,6 @@ class Config {
         engineSlug,
         flutterSlug,
         packagesSlug,
-        pluginsSlug,
       };
 
   /// List of guaranteed scheduling Github repos.
@@ -60,11 +59,10 @@ class Config {
   /// This adds support for check runs to the repo.
   Set<gh.RepositorySlug> get postsubmitSupportedRepos => <gh.RepositorySlug>{
         packagesSlug,
-        pluginsSlug,
       };
 
   /// List of Cirrus supported repos.
-  static Set<String> cirrusSupportedRepos = <String>{'plugins', 'packages', 'flutter'};
+  static Set<String> cirrusSupportedRepos = <String>{'packages', 'flutter'};
 
   /// GitHub repositories that use CI status to determine if pull requests can be submitted.
   static Set<gh.RepositorySlug> reposWithTreeStatus = <gh.RepositorySlug>{
@@ -78,7 +76,6 @@ class Config {
       cocoonSlug: 'main',
       flutterSlug: 'master',
       engineSlug: 'main',
-      pluginsSlug: 'main',
       packagesSlug: 'main',
       recipesSlug: 'main',
     };
@@ -173,9 +170,6 @@ class Config {
   /// Max retries when scheduling builds.
   static const RetryOptions schedulerRetry = RetryOptions(maxAttempts: 3);
 
-  /// Max retries when getting builds from buildbucket.
-  static const RetryOptions buildbucketRetry = RetryOptions(maxAttempts: 3, delayFactor: Duration(seconds: 2));
-
   /// List of GitHub accounts related to releases.
   Future<List<String>> get releaseAccounts => _getReleaseAccounts();
 
@@ -226,9 +220,9 @@ class Config {
       'request may not have tests. Please make sure to add tests before merging. '
       'If you need '
       '[an exemption](https://github.com/flutter/flutter/wiki/Tree-hygiene#tests) '
-      'to this rule, contact Hixie on the #hackers '
+      'to this rule, contact Hixie or stuartmorgan on the #hackers '
       'channel in [Chat](https://github.com/flutter/flutter/wiki/Chat) '
-      '(don\'t just cc him here, he won\'t see it! *He\'s on Discord!*).'
+      '(don\'t just cc them here, they won\'t see it! Use Discord!).'
       '\n\n'
       'If you are not sure if you need tests, consider this rule of thumb: '
       'the purpose of a test is to make sure someone doesn\'t accidentally '
@@ -321,7 +315,6 @@ class Config {
   static gh.RepositorySlug get engineSlug => gh.RepositorySlug('flutter', 'engine');
   static gh.RepositorySlug get flutterSlug => gh.RepositorySlug('flutter', 'flutter');
   static gh.RepositorySlug get packagesSlug => gh.RepositorySlug('flutter', 'packages');
-  static gh.RepositorySlug get pluginsSlug => gh.RepositorySlug('flutter', 'plugins');
 
   /// Flutter recipes is hosted on Gerrit instead of GitHub.
   static gh.RepositorySlug get recipesSlug => gh.RepositorySlug('flutter', 'recipes');

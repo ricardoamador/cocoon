@@ -51,6 +51,7 @@ void main() {
     late List<QueryOptions> expectedOptions;
     late QueryOptions flutterOption;
     late QueryOptions cocoonOption;
+    const String testSubscription = 'test-sub';
     const String testTopic = 'test-topic';
     const String rollorAuthor = "engine-flutter-autoroll";
     const String labelName = "warning: land on red to fix tree breakage";
@@ -154,7 +155,10 @@ void main() {
         pubsub: pubsub,
         cronAuthProvider: auth,
       );
-      cocoonRequest = PullRequestHelper(prNumber: 0, lastCommitHash: oid);
+      cocoonRequest = PullRequestHelper(
+        prNumber: 0,
+        lastCommitHash: oid,
+      );
 
       final Map<int, RepositorySlug> expectedMergeRequestMap = {};
       expectedMergeRequestMap[0] = RepositorySlug('flutter', cocoonRepo);
@@ -751,7 +755,8 @@ void main() {
       await checkPullRequest.get();
       expectedOptions.add(flutterOption);
       verifyQueries(expectedOptions);
-      assert(pubsub.messagesQueue.isEmpty);
+      // Re-add to queue to poll for reviews
+      assert(pubsub.messagesQueue.isNotEmpty);
     });
 
     test('All messages are pulled', () async {
@@ -777,7 +782,7 @@ void main() {
         prNumber: 0,
         lastCommitHash: oid,
       );
-      final List<pub.ReceivedMessage> messages = await checkPullRequest.pullMessages();
+      final List<pub.ReceivedMessage> messages = await checkPullRequest.pullMessages(testSubscription, 5, 5);
       expect(messages.length, 3);
     });
   });

@@ -25,6 +25,7 @@ targets:
     properties:
       tags: >
         ["devicelab"]
+      task_name: android_semantics_integration_test
   - name: Mac_android ignore_myflakiness
     bringup: true
     builder: Mac_android ignore_myflakiness
@@ -34,6 +35,7 @@ targets:
       ignore_flakiness: "true"
       tags: >
         ["devicelab"]
+      task_name: ignore_myflakiness
   - name: Linux analyze
     builder: Linux analyze
     scheduler: luci
@@ -68,6 +70,7 @@ targets:
     properties:
       tags: >
         ["devicelab"]
+      task_name: android_semantics_integration_test
   - name: Mac_android ignore_myflakiness
     builder: Mac_android ignore_myflakiness
     presubmit: false
@@ -75,6 +78,7 @@ targets:
     properties:
       tags: >
         ["devicelab"]
+      task_name: ignore_myflakiness
   - name: Linux analyze
     builder: Linux analyze
     scheduler: luci
@@ -110,6 +114,7 @@ targets:
     properties:
       tags: >
         ["devicelab"]
+      task_name: android_semantics_integration_test
   - name: Mac_android ignore_myflakiness
     bringup: true
     builder: Mac_android ignore_myflakiness
@@ -159,7 +164,7 @@ const String testOwnersContent = '''
 ## Shards tests
 # framework_tests @HansMuller @flutter/framework
 
-
+## Mac Android DeviceLab tests
 /dev/devicelab/bin/tasks/android_semantics_integration_test.dart @HansMuller @flutter/framework
 ''';
 
@@ -225,10 +230,9 @@ Please follow https://github.com/flutter/flutter/wiki/Reducing-Test-Flakiness#fi
 
 const String expectedSemanticsIntegrationTestResponseAssignee = 'HansMuller';
 const List<String> expectedSemanticsIntegrationTestResponseLabels = <String>[
-  'team: flakes',
-  'severe: flake',
-  'P1',
-  'framework',
+  'c: flake',
+  'P0',
+  'team-framework',
 ];
 const String expectedSemanticsIntegrationTestCiYamlContent = '''
 # Describes the targets run in continuous integration environment.
@@ -250,6 +254,7 @@ targets:
     properties:
       tags: >
         ["devicelab"]
+      task_name: android_semantics_integration_test
   - name: Mac_android ignore_myflakiness
     bringup: true
     builder: Mac_android ignore_myflakiness
@@ -259,6 +264,7 @@ targets:
       ignore_flakiness: "true"
       tags: >
         ["devicelab"]
+      task_name: ignore_myflakiness
   - name: Linux analyze
     builder: Linux analyze
     scheduler: luci
@@ -334,10 +340,9 @@ final List<BuilderStatistic> analyzeTestResponse = <BuilderStatistic>[
 ];
 const String expectedAnalyzeTestResponseAssignee = 'HansMuller';
 const List<String> expectedAnalyzeTestResponseLabels = <String>[
-  'team: flakes',
-  'severe: flake',
-  'P1',
-  'framework',
+  'c: flake',
+  'P0',
+  'team-framework',
 ];
 
 final List<BuilderStatistic> frameworkTestResponse = <BuilderStatistic>[
@@ -367,10 +372,9 @@ final List<BuilderStatistic> unknownTestResponse = <BuilderStatistic>[
 ];
 const String expectedFrameworkTestResponseAssignee = 'HansMuller';
 const List<String> expectedFrameworkTestResponseLabels = <String>[
-  'team: flakes',
-  'severe: flake',
-  'P1',
-  'framework',
+  'c: flake',
+  'P0',
+  'team-framework',
 ];
 
 String gitHubEncode(String source) {

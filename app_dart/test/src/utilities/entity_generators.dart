@@ -103,6 +103,7 @@ Target generateTarget(
   Map<String, String>? properties,
   Map<String, String>? dimensions,
   List<String>? runIf,
+  List<String>? runIfNot,
   bool? bringup,
   github.RepositorySlug? slug,
   pb.SchedulerSystem? schedulerSystem,
@@ -126,6 +127,7 @@ Target generateTarget(
       properties: properties,
       dimensions: dimensions,
       runIf: runIf ?? <String>[],
+      runIfNot: runIfNot ?? <String>[],
       bringup: bringup ?? false,
       scheduler: schedulerSystem ?? pb.SchedulerSystem.cocoon,
     ),
@@ -222,6 +224,7 @@ github.PullRequest generatePullRequest({
   DateTime? mergedAt,
   String sha = 'abc',
   bool merged = true,
+  List<github.IssueLabel> labels = const [],
 }) {
   mergedAt ??= DateTime.fromMillisecondsSinceEpoch(1);
   return github.PullRequest(
@@ -247,6 +250,7 @@ github.PullRequest generatePullRequest({
     ),
     mergeCommitSha: sha,
     merged: merged,
+    labels: labels,
   );
 }
 
