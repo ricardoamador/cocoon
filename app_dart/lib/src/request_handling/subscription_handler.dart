@@ -117,14 +117,13 @@ abstract class SubscriptionHandler extends RequestHandler<Body> {
     }
 
     log.finer(pushEvent.toString());
-    // MessageV2 message = pushEvent.message
-    
+    final MessageV2 messageV2 = MessageV2.fromJson(jsonDecode(pushEvent.message.asString) as Map<String, dynamic>);
 
     // Need a way to get the messageId and publishTime, not sure.
     // log.fine('PubsubMessage publishTime: ${envelope.message!.publishTime}');
 
     // final String messageId = envelope.message!.messageId!;
-    final String messageId = 'newId';
+    final String messageId = messageV2.messageId!;
 
     final Uint8List? messageLock = await cache.getOrCreate(
       subscriptionName,
