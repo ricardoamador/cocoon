@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:buildbucket/buildbucket_pb.dart';
 import 'package:github/github.dart';
 import 'package:meta/meta.dart';
 
@@ -52,7 +53,10 @@ class PresubmitLuciSubscription extends SubscriptionHandler {
   @override
   Future<Body> post() async {
     RepositorySlug slug;
-    final BuildPushMessage buildPushMessage = BuildPushMessage.fromPushMessage(message);
+
+    PubSubCallBack pubSubCallBack = PubSubCallBack.fromJson(message.data!);
+
+    // final BuildPushMessage buildPushMessage = BuildPushMessage.fromPushMessage(message);
     final Build build = buildPushMessage.build!;
     final String builderName = build.tagsByName('builder').single;
     log.fine('Available tags: ${build.tags.toString()}');

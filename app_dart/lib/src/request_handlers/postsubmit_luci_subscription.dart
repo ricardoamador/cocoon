@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:buildbucket/buildbucket_pb.dart';
 import 'package:cocoon_service/ci_yaml.dart';
 import 'package:gcloud/db.dart';
 import 'package:meta/meta.dart';
@@ -43,7 +44,9 @@ class PostsubmitLuciSubscription extends SubscriptionHandler {
   Future<Body> post() async {
     final DatastoreService datastore = datastoreProvider(config.db);
 
-    final BuildPushMessage buildPushMessage = BuildPushMessage.fromPushMessage(message);
+    final PubSubCallBack pubSubCallBack = PubSubCallBack.fromJson(message.data!);
+
+    // final BuildPushMessage buildPushMessage = BuildPushMessage.fromPushMessage(message);
     log.fine('userData=${buildPushMessage.userData}');
     log.fine('Updating buildId=${buildPushMessage.build?.id} for result=${buildPushMessage.build?.result}');
     if (buildPushMessage.userData.isEmpty) {

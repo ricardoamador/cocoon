@@ -6,7 +6,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:buildbucket/buildbucket_pb.dart';
 import 'package:cocoon_service/src/model/luci/message_v2.dart';
 import 'package:gcloud/pubsub.dart';
 import 'package:meta/meta.dart';
