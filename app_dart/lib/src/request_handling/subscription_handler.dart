@@ -6,6 +6,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:buildbucket/buildbucket_pb.dart';
+import 'package:cocoon_service/src/model/luci/message_v2.dart';
+import 'package:gcloud/pubsub.dart';
 import 'package:meta/meta.dart';
 
 import '../model/luci/push_message.dart';
@@ -85,12 +88,18 @@ abstract class SubscriptionHandler extends RequestHandler<Body> {
       return;
     }
 
+    PushEvent? pushEvent;
+    // PubSubCallBack? pubSubCallBack;
+    
+
     log.fine('Request body: ${utf8.decode(body)}');
-    PushMessageEnvelope? envelope;
+    // PushMessageEnvelope? envelope;
+
     if (body.isNotEmpty) {
       try {
-        final Map<String, dynamic> json = jsonDecode(utf8.decode(body)) as Map<String, dynamic>;
-        envelope = PushMessageEnvelope.fromJson(json);
+        // final Map<String, dynamic> json = jsonDecode(utf8.decode(body)) as Map<String, dynamic>;
+        // envelope = PushMessageEnvelope.fromJson(json);
+        pushEvent = PushEvent.fromJson(utf8.decode(body));
       } catch (error) {
         final HttpResponse response = request.response;
         response
@@ -102,13 +111,20 @@ abstract class SubscriptionHandler extends RequestHandler<Body> {
       }
     }
 
-    if (envelope == null) {
+    // if (envelope == null) {
+    if (pushEvent == null) {
       throw const BadRequestException('Failed to get message');
     }
-    log.finer(envelope.toJson());
-    log.fine('PubsubMessage publishTime: ${envelope.message!.publishTime}');
 
-    final String messageId = envelope.message!.messageId!;
+    log.finer(pushEvent.toString());
+    // MessageV2 message = pushEvent.message
+    
+
+    // Need a way to get the messageId and publishTime, not sure.
+    // log.fine('PubsubMessage publishTime: ${envelope.message!.publishTime}');
+
+    // final String messageId = envelope.message!.messageId!;
+    final String messageId = 'newId';
 
     final Uint8List? messageLock = await cache.getOrCreate(
       subscriptionName,
@@ -145,7 +161,7 @@ abstract class SubscriptionHandler extends RequestHandler<Body> {
         },
       ),
       zoneValues: <RequestKey<dynamic>, Object?>{
-        PubSubKey.message: envelope.message,
+        PubSubKey.message: pushEvent.message,
         ApiKey.authContext: authContext,
       },
     );

@@ -13,6 +13,8 @@ import '../common/json_converters.dart';
 
 part 'push_message.g.dart';
 
+//TODO we can remove this file completely
+
 /// A Cloud PubSub push message.
 ///
 /// For example:
@@ -33,8 +35,8 @@ part 'push_message.g.dart';
 ///
 /// See https://cloud.google.com/pubsub/docs/push#receiving_push_messages
 @JsonSerializable(includeIfNull: false)
-class PushMessageEnvelope extends JsonBody {
-  const PushMessageEnvelope({
+class PushMessageEnvelope extends JsonBody {  // This is akin to PushEvent which will have the PushMessage in it.
+  const PushMessageEnvelope({  // This is PushEvent from gcloud.
     this.message,
     this.subscription,
   });
@@ -53,8 +55,8 @@ class PushMessageEnvelope extends JsonBody {
 
 /// A PubSub push message payload.
 @JsonSerializable(includeIfNull: false)
-class PushMessage extends JsonBody {
-  const PushMessage({
+class PushMessage extends JsonBody {  // message.data will now contain the PubSubCallBack proto object
+  const PushMessage({   // This is gcloud PubSub.message but does not have messageId or publishTime.
     this.attributes,
     this.data,
     this.messageId,
@@ -85,6 +87,7 @@ class PushMessage extends JsonBody {
   Map<String, dynamic> toJson() => _$PushMessageToJson(this);
 }
 
+/// The rest of these classes can be removed
 /// The LUCI build data from a PubSub push message payload.
 @JsonSerializable(includeIfNull: false, fieldRename: FieldRename.snake)
 class BuildPushMessage extends JsonBody {
