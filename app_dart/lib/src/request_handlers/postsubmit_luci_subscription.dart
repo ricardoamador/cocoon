@@ -2,7 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:buildbucket/buildbucket_pb.dart';
+import 'dart:convert';
+
+import 'package:buildbucket/buildbucket_pb.dart' as bb;
 import 'package:cocoon_service/ci_yaml.dart';
 import 'package:gcloud/db.dart';
 import 'package:meta/meta.dart';
@@ -44,31 +46,54 @@ class PostsubmitLuciSubscription extends SubscriptionHandler {
   Future<Body> post() async {
     final DatastoreService datastore = datastoreProvider(config.db);
 
-    final PubSubCallBack pubSubCallBack = PubSubCallBack.fromJson(message.data!);
+    final bb.PubSubCallBack pubSubCallBack = bb.PubSubCallBack.fromJson(message.data!);
+    final List<int> userDataBytes = pubSubCallBack.userData;
+    // user data from the message
+    final String userDataString = String.fromCharCodes(userDataBytes);
+    // build data from the message
+    final bb.BuildsV2PubSub buildsV2PubSub = pubSubCallBack.buildPubsub;
+
+    final bb.Build build = buildsV2PubSub.build;
+
+    final Map<String, dynamic> userDataMap = json.decode(userDataString) as Map<String, dynamic>;
 
     // final BuildPushMessage buildPushMessage = BuildPushMessage.fromPushMessage(message);
-    log.fine('userData=${buildPushMessage.userData}');
-    log.fine('Updating buildId=${buildPushMessage.build?.id} for result=${buildPushMessage.build?.result}');
-    if (buildPushMessage.userData.isEmpty) {
+    // log.fine('userData=${buildPushMessage.userData}');
+    log.fine('userData=$userDataMap');
+    // log.fine('Updating buildId=${buildPushMessage.build?.id} for result=${buildPushMessage.build?.result}');
+    // Human readable status reason is available in summary_markdown.
+    log.fine('Updating buildId=${build.id} for result=${build.status.name}');
+    // if (buildPushMessage.userData.isEmpty) {
+    if (userDataString.isEmpty) {
       log.fine('User data is empty');
       return Body.empty;
     }
 
-    final String? rawTaskKey = buildPushMessage.userData['task_key'] as String?;
-    final String? rawCommitKey = buildPushMessage.userData['commit_key'] as String?;
+    // final String? rawTaskKey = buildPushMessage.userData['task_key'] as String?;
+    // final String? rawCommitKey = buildPushMessage.userData['commit_key'] as String?;
+
+    final String? rawTaskKey = userDataMap['task_key'] as String?;
+    final String? rawCommitKey = userDataMap['commit_key'] as String?;
+
     if (rawCommitKey == null) {
       throw const BadRequestException('userData does not contain commit_key');
     }
-    final Build? build = buildPushMessage.build;
-    if (build == null) {
-      log.warning('Build is null');
-      return Body.empty;
-    }
+    // final Build? build = buildPushMessage.build;
+    // if (build == null) {
+    //   log.warning('Build is null');
+    //   return Body.empty;
+    // }
+
     final Key<String> commitKey = Key<String>(Key<dynamic>.emptyKey(Partition(null)), Commit, rawCommitKey);
     Task? task;
     if (rawTaskKey == null || rawTaskKey.isEmpty || rawTaskKey == 'null') {
       log.fine('Pulling builder name from parameters_json...');
-      log.fine(build.buildParameters);
+      final Map<String, dynamic> buildParameters = build.infra.buildbucket.requestedProperties.fields;
+      
+
+
+      // log.fine(build.buildParameters);
+      log.fine(buildParameters);
       final String? taskName = build.buildParameters?['builder_name'] as String?;
       if (taskName == null || taskName.isEmpty) {
         throw const BadRequestException('task_key is null and parameters_json does not contain the builder name');
