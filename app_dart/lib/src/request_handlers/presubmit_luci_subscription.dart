@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:buildbucket/buildbucket_pb.dart';
+// import 'package:buildbucket/buildbucket_pb.dart' as bb;
+import 'package:buildbucket/buildbucket_pb.dart' as bbv2;
 import 'package:github/github.dart';
 import 'package:meta/meta.dart';
 

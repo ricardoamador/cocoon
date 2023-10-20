@@ -5,13 +5,14 @@
 import 'package:cocoon_service/src/model/appengine/commit.dart';
 import 'package:cocoon_service/src/model/appengine/task.dart';
 import 'package:cocoon_service/src/model/luci/buildbucket.dart';
-import 'package:cocoon_service/src/model/luci/push_message.dart' as pm;
+// import 'package:cocoon_service/src/model/luci/push_message.dart' as pm;
 import 'package:cocoon_service/src/request_handling/exceptions.dart';
 import 'package:cocoon_service/src/service/datastore.dart';
 import 'package:gcloud/db.dart';
 import 'package:test/test.dart';
 
-import 'package:cocoon_service/src/model/luci/buildbucket.dart' as bb;
+// import 'package:cocoon_service/src/model/luci/buildbucket.dart' as bb;
+import 'package:buildbucket/buildbucket_pb.dart' as bbv2;
 
 import '../src/datastore/fake_config.dart';
 import '../src/utilities/entity_generators.dart';

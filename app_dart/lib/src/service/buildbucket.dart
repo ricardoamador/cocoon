@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
 
 import '../model/luci/buildbucket.dart';
+import 'package:buildbucket/buildbucket_pb.dart' as bbv2;
 import '../request_handling/body.dart';
 import 'access_token_provider.dart';
 
@@ -60,10 +61,10 @@ class BuildBucketClient {
   /// The [http.Client] to use for requests.
   final http.Client httpClient;
 
-  Future<T> _postRequest<S extends JsonBody, T>(
+  Future<T> _postRequest<S extends JsonBody, T, R>(
     String path,
     S request,
-    T Function(Map<String, dynamic>? rawResponse) responseFromJson, {
+    T Function(R rawResponse) responseFromJson, {
     String buildBucketUri = kDefaultBuildBucketBuildUri,
   }) async {
     final Uri url = Uri.parse('$buildBucketUri$path');
@@ -83,21 +84,21 @@ class BuildBucketClient {
 
     if (response.statusCode < 300) {
       return responseFromJson(
-        json.decode(response.body.substring(kRpcResponseGarbage.length)) as Map<String, dynamic>?,
+        json.decode(response.body.substring(kRpcResponseGarbage.length)) as R,
       );
     }
     throw BuildBucketException(response.statusCode, response.body);
   }
 
   /// The RPC request to schedule a build.
-  Future<Build> scheduleBuild(
+  Future<bbv2.Build> scheduleBuild(
     ScheduleBuildRequest request, {
     String buildBucketUri = kDefaultBuildBucketBuildUri,
   }) {
-    return _postRequest<ScheduleBuildRequest, Build>(
+    return _postRequest<ScheduleBuildRequest, bbv2.Build, String>(
       '/ScheduleBuild',
       request,
-      Build.fromJson,
+      bbv2.Build.fromJson,
       buildBucketUri: buildBucketUri,
     );
   }
@@ -107,7 +108,7 @@ class BuildBucketClient {
     SearchBuildsRequest request, {
     String buildBucketUri = kDefaultBuildBucketBuildUri,
   }) {
-    return _postRequest<SearchBuildsRequest, SearchBuildsResponse>(
+    return _postRequest<SearchBuildsRequest, SearchBuildsResponse, Map<String, dynamic>?>(
       '/SearchBuilds',
       request,
       SearchBuildsResponse.fromJson,
@@ -124,7 +125,7 @@ class BuildBucketClient {
     BatchRequest request, {
     String buildBucketUri = kDefaultBuildBucketBuildUri,
   }) async {
-    final BatchResponse response = await _postRequest<BatchRequest, BatchResponse>(
+    final BatchResponse response = await _postRequest<BatchRequest, BatchResponse, Map<String, dynamic>?>(
       '/Batch',
       request,
       BatchResponse.fromJson,
@@ -137,27 +138,27 @@ class BuildBucketClient {
   }
 
   /// The RPC request to cancel a build.
-  Future<Build> cancelBuild(
+  Future<bbv2.Build> cancelBuild(
     CancelBuildRequest request, {
     String buildBucketUri = kDefaultBuildBucketBuildUri,
   }) {
-    return _postRequest<CancelBuildRequest, Build>(
+    return _postRequest<CancelBuildRequest, bbv2.Build, String>(
       '/CancelBuild',
       request,
-      Build.fromJson,
+      bbv2.Build.fromJson,
       buildBucketUri: buildBucketUri,
     );
   }
 
   /// The RPC request to get details about a build.
-  Future<Build> getBuild(
+  Future<bbv2.Build> getBuild(
     GetBuildRequest request, {
     String buildBucketUri = kDefaultBuildBucketBuildUri,
   }) {
-    return _postRequest<GetBuildRequest, Build>(
+    return _postRequest<GetBuildRequest, bbv2.Build, String>(
       '/GetBuild',
       request,
-      Build.fromJson,
+      bbv2.Build.fromJson,
       buildBucketUri: buildBucketUri,
     );
   }
@@ -167,7 +168,7 @@ class BuildBucketClient {
     ListBuildersRequest request, {
     String buildBucketUri = kDefaultBuildBucketBuilderUri,
   }) {
-    return _postRequest<ListBuildersRequest, ListBuildersResponse>(
+    return _postRequest<ListBuildersRequest, ListBuildersResponse, Map<String, dynamic>?>(
       '/ListBuilders',
       request,
       ListBuildersResponse.fromJson,

@@ -4,14 +4,13 @@
 
 import 'dart:convert';
 
-import 'package:buildbucket/buildbucket_pb.dart' as bb;
+import 'package:buildbucket/buildbucket_pb.dart' as bbv2;
 import 'package:cocoon_service/ci_yaml.dart';
 import 'package:gcloud/db.dart';
 import 'package:meta/meta.dart';
 
 import '../model/appengine/commit.dart';
 import '../model/appengine/task.dart';
-import '../model/luci/push_message.dart';
 import '../request_handling/body.dart';
 import '../request_handling/exceptions.dart';
 import '../request_handling/subscription_handler.dart';
@@ -46,14 +45,14 @@ class PostsubmitLuciSubscription extends SubscriptionHandler {
   Future<Body> post() async {
     final DatastoreService datastore = datastoreProvider(config.db);
 
-    final bb.PubSubCallBack pubSubCallBack = bb.PubSubCallBack.fromJson(message.data!);
+    final bbv2.PubSubCallBack pubSubCallBack = bbv2.PubSubCallBack.fromJson(message.data!);
     final List<int> userDataBytes = pubSubCallBack.userData;
     // user data from the message
     final String userDataString = String.fromCharCodes(userDataBytes);
     // build data from the message
-    final bb.BuildsV2PubSub buildsV2PubSub = pubSubCallBack.buildPubsub;
+    final bbv2.BuildsV2PubSub buildsV2PubSub = pubSubCallBack.buildPubsub;
 
-    final bb.Build build = buildsV2PubSub.build;
+    final bbv2.Build build = buildsV2PubSub.build;
 
     final Map<String, dynamic> userDataMap = json.decode(userDataString) as Map<String, dynamic>;
 
@@ -89,15 +88,16 @@ class PostsubmitLuciSubscription extends SubscriptionHandler {
     if (rawTaskKey == null || rawTaskKey.isEmpty || rawTaskKey == 'null') {
       log.fine('Pulling builder name from parameters_json...');
       final Map<String, dynamic> buildParameters = build.infra.buildbucket.requestedProperties.fields;
-      
-
 
       // log.fine(build.buildParameters);
       log.fine(buildParameters);
-      final String? taskName = build.buildParameters?['builder_name'] as String?;
-      if (taskName == null || taskName.isEmpty) {
+      // final String? taskName = build.buildParameters?['builder_name'] as String?;
+      final String taskName = build.builder.builder;
+      // final String taskName = buildParameters.containsKey('builder_name') ? buildParameters['build_name'] : null;
+      if (taskName.isEmpty) {
         throw const BadRequestException('task_key is null and parameters_json does not contain the builder name');
       }
+
       final List<Task> tasks = await datastore.queryRecentTasksByName(name: taskName).toList();
       task = tasks.singleWhere((Task task) => task.parentKey?.id == commitKey.id);
     } else {
@@ -106,7 +106,11 @@ class PostsubmitLuciSubscription extends SubscriptionHandler {
       final Key<int> taskKey = Key<int>(commitKey, Task, taskId);
       task = await datastore.lookupByValue<Task>(taskKey);
     }
+
+    // We may need to update the task in the datastore.
     log.fine('Found $task');
+
+    // task is something we define, in appengine.
 
     if (_shouldUpdateTask(build, task)) {
       final String oldTaskStatus = task.status;
@@ -159,7 +163,36 @@ class PostsubmitLuciSubscription extends SubscriptionHandler {
   //    b) `completed`: update info like status.
   // 2) the task is already completed.
   //    The task may have been marked as completed from test framework via update-task-status API.
-  bool _shouldUpdateTask(Build build, Task task) {
-    return build.status != Status.scheduled && !Task.finishedStatusValues.contains(task.status);
+  // bool _shouldUpdateTask(Build build, Task task) {
+  //   return build.status != Status.scheduled && !Task.finishedStatusValues.contains(task.status);
+  // }
+
+
+  // https://source.chromium.org/chromium/infra/infra/+/main:go/src/go.chromium.org/luci/buildbucket/proto/common.proto
+  //
+  // In the case of buildbucket v2 the status can be:
+  // STATUS_UNSPECIFIED = 0;
+  // Build was scheduled, but did not start or end yet.
+  // SCHEDULED = 1;
+  // Build/step has started.
+  // STARTED = 2;
+  // A build/step ended successfully.
+  // This is a terminal status. It may not transition to another status.
+  // SUCCESS = 12;  // 8 | ENDED
+  // A build/step ended unsuccessfully due to its Build.Input,
+  // e.g. tests failed, and NOT due to a build infrastructure failure.
+  // This is a terminal status. It may not transition to another status.
+  // FAILURE = 20;  // 16 | ENDED
+  // A build/step ended unsuccessfully due to a failure independent of the
+  // input, e.g. swarming failed, not enough capacity or the recipe was unable
+  // to read the patch from gerrit.
+  // start_time is not required for this status.
+  // This is a terminal status. It may not transition to another status.
+  // INFRA_FAILURE = 36;  // 32 | ENDED
+  // A build was cancelled explicitly, e.g. via an RPC.
+  // This is a terminal status. It may not transition to another status.
+  // CANCELED = 68;  // 64 | ENDED
+  bool _shouldUpdateTask(bbv2.Build build, Task task) {
+    return build.status != bbv2.Status.SCHEDULED && !Task.finishedStatusValues.contains(task.status);
   }
 }

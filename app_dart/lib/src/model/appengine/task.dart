@@ -10,11 +10,10 @@ import '../../request_handling/exceptions.dart';
 import '../../service/datastore.dart';
 import '../../service/logging.dart';
 import '../ci_yaml/target.dart';
-import '../luci/push_message.dart';
 import 'commit.dart';
 import 'key_converter.dart';
 
-import 'package:cocoon_service/src/model/luci/buildbucket.dart' as bb;
+import 'package:buildbucket/buildbucket_pb.dart' as bbv2;
 part 'task.g.dart';
 
 /// Class that represents the intersection of a test at a particular [Commit].
@@ -131,29 +130,30 @@ class Task extends Model<int> {
     );
   }
 
-  /// Creates a [Task] based on a buildbucket [bb.Build].
+  /// Creates a [Task] based on a buildbucket [bbv2.Build].
   static Future<Task> fromBuildbucketBuild(
-    bb.Build build,
+    bbv2.Build build,
     DatastoreService datastore, {
     String? customName,
   }) async {
     log.fine('Creating task from buildbucket result: ${build.toString()}');
     // Example: Getting "flutter" from "mirrors/flutter".
-    final String repository = build.input!.gitilesCommit!.project!.split('/')[1];
+    final String repository = build.input.gitilesCommit.project.split('/')[1];
     log.fine('Repository: $repository');
 
     // Example: Getting "stable" from "refs/heads/stable".
-    final String branch = build.input!.gitilesCommit!.ref!.split('/')[2];
+    final String branch = build.input.gitilesCommit.ref.split('/')[2];
     log.fine('Branch: $branch');
 
-    final String hash = build.input!.gitilesCommit!.hash!;
+    // final String hash = build.input!.gitilesCommit!.hash!;
+    final String hash = build.input.gitilesCommit.id;
     log.fine('Hash: $hash');
 
     final RepositorySlug slug = RepositorySlug('flutter', repository);
     log.fine('Slug: ${slug.toString()}');
 
-    final int startTime = build.startTime?.millisecondsSinceEpoch ?? 0;
-    final int endTime = build.endTime?.millisecondsSinceEpoch ?? 0;
+    final int startTime = build.startTime.toDateTime().millisecondsSinceEpoch;
+    final int endTime = build.endTime.toDateTime().millisecondsSinceEpoch;
     log.fine('Start/end time (ms): $startTime, $endTime');
 
     final String id = '${slug.fullName}/$branch/$hash';
@@ -163,15 +163,16 @@ class Task extends Model<int> {
       attempts: 1,
       buildNumber: build.number,
       buildNumberList: build.number.toString(),
-      builderName: build.builderId.builder,
+      // builderName: build.builderId.builder,
+      builderName: build.builder.builder,
       commitKey: commitKey,
       createTimestamp: startTime,
       endTimestamp: endTime,
-      luciBucket: build.builderId.bucket,
-      name: customName ?? build.builderId.builder,
-      stageName: build.builderId.project,
+      luciBucket: 'luci.${build.builder.project}.${build.builder.bucket}',
+      name: customName ?? build.builder.builder,
+      stageName: build.builder.project,  // cocoon, flutter, engine, packages, ...
       startTimestamp: startTime,
-      status: convertBuildbucketStatusToString(build.status!),
+      status: convertBuildbucketStatusToString(build.status),
       key: commit.key.append(Task),
       timeoutInMinutes: 0,
       reason: '',
@@ -182,17 +183,17 @@ class Task extends Model<int> {
   }
 
   /// Converts a buildbucket status to a task status.
-  static String convertBuildbucketStatusToString(bb.Status status) {
+  static String convertBuildbucketStatusToString(bbv2.Status status) {
     switch (status) {
-      case bb.Status.success:
+      case bbv2.Status.SUCCESS:
         return statusSucceeded;
-      case bb.Status.canceled:
+      case bbv2.Status.CANCELED:
         return statusCancelled;
-      case bb.Status.infraFailure:
+      case bbv2.Status.INFRA_FAILURE:
         return statusInfraFailure;
-      case bb.Status.started:
+      case bbv2.Status.STARTED:
         return statusInProgress;
-      case bb.Status.scheduled:
+      case bbv2.Status.SCHEDULED:
         return statusNew;
       default:
         return statusFailed;
@@ -380,13 +381,32 @@ class Task extends Model<int> {
     _status = value;
   }
 
-  /// Update [Task] fields based on a LUCI [Build].
-  void updateFromBuild(Build build) {
-    final List<String>? tags = build.tags;
+  /// Update [Task] fields based on a LUCI [bbv2.Build].
+  // void updateFromBuild(Build build) {
+  void updateFromBuild(bbv2.Build build) {
+    // final List<String>? tags = build.tags;
+    // NOTE we add the tags so this stuff should be there when we want it.
+    
+
+    if (build.tags.isEmpty) {
+      log.warning('Tags were not found');
+      //TOOD add identifier to this.
+      throw const BadRequestException('build did not contain tags');
+    }
+
+    // final String? buildAddress = tags.keys.firstWhere((element) => element != null && element.contains('build_address'));
+    String? buildAddress;
+    // TODO fix this hack as I cannot import the StringPair for some reason.
+    try {
+      buildAddress = build.tags.firstWhere((element) => element.key.contains('build_address')).value;
+    } on StateError {
+      buildAddress = null;
+    }
+
     // Example tag: build_address:luci.flutter.prod/Linux Cocoon/271
-    final String? buildAddress = tags?.firstWhere((String tag) => tag.contains('build_address'));
+    // final String? buildAddress = tags?.firstWhere((String tag) => tag.contains('build_address'));
     if (buildAddress == null) {
-      log.warning('Tags: $tags');
+      log.warning('Tags: ${build.tags}');
       throw const BadRequestException('build_address does not contain build number');
     }
 
@@ -406,16 +426,20 @@ class Task extends Model<int> {
       buildNumberList = buildNumberSet.join(',');
     }
 
-    createTimestamp = build.createdTimestamp?.millisecondsSinceEpoch ?? 0;
-    startTimestamp = build.startedTimestamp?.millisecondsSinceEpoch ?? 0;
-    endTimestamp = build.completedTimestamp?.millisecondsSinceEpoch ?? 0;
+    // createTimestamp = build.createdTimestamp?.millisecondsSinceEpoch ?? 0;
+    // startTimestamp = build.startedTimestamp?.millisecondsSinceEpoch ?? 0;
+    // endTimestamp = build.completedTimestamp?.millisecondsSinceEpoch ?? 0;
+
+    createTimestamp = build.createTime.toDateTime().millisecondsSinceEpoch;
+    startTimestamp = build.startTime.toDateTime().millisecondsSinceEpoch;
+    endTimestamp = build.endTime.toDateTime().millisecondsSinceEpoch;
 
     _setStatusFromLuciStatus(build);
   }
 
-  /// Updates [Task] based on a Buildbucket [Build].
-  void updateFromBuildbucketBuild(bb.Build build) {
-    buildNumber = build.number!;
+  /// Updates [Task] based on a Buildbucket [bbv2.Build].
+  void updateFromBuildbucketBuild(bbv2.Build build) {
+    buildNumber = build.number;
 
     if (buildNumberList == null) {
       buildNumberList = '$buildNumber';
@@ -425,36 +449,35 @@ class Task extends Model<int> {
       buildNumberList = buildNumberSet.join(',');
     }
 
-    createTimestamp = build.startTime?.millisecondsSinceEpoch ?? 0;
-    startTimestamp = build.startTime?.millisecondsSinceEpoch ?? 0;
-    endTimestamp = build.endTime?.millisecondsSinceEpoch ?? 0;
+    createTimestamp = build.startTime.toDateTime().millisecondsSinceEpoch;
+    startTimestamp = build.startTime.toDateTime().millisecondsSinceEpoch;
+    endTimestamp = build.endTime.toDateTime().millisecondsSinceEpoch;
 
     attempts = buildNumberList!.split(',').length;
 
-    status = convertBuildbucketStatusToString(build.status!);
+    status = convertBuildbucketStatusToString(build.status);
   }
 
-  /// Get a [Task] status from a LUCI [Build] status/result.
-  String _setStatusFromLuciStatus(Build build) {
+  /// Get a [Task] status from a LUCI [bbv2.Build] status/result.
+  String _setStatusFromLuciStatus(bbv2.Build build) {
     // Updates can come out of order. Ensure completed statuses are kept.
     if (_isStatusCompleted()) {
       return status;
     }
 
-    if (build.status == Status.started) {
-      return status = statusInProgress;
-    }
-    switch (build.result) {
-      case Result.success:
+    switch (build.status) {
+      case bbv2.Status.STARTED:
+        return status = statusInProgress;
+      case bbv2.Status.SUCCESS:
         return status = statusSucceeded;
-      case Result.canceled:
+      case bbv2.Status.CANCELED:
         return status = statusCancelled;
-      case Result.infraFailure:
+      case bbv2.Status.INFRA_FAILURE:
         return status = statusInfraFailure;
-      case Result.failure:
+      case bbv2.Status.FAILURE:
         return status = statusFailed;
       default:
-        throw BadRequestException('${build.result} is unknown');
+        throw BadRequestException('${build.status} is unknown');
     }
   }
 

@@ -4,6 +4,7 @@
 
 import 'package:cocoon_service/src/model/luci/buildbucket.dart';
 import 'package:cocoon_service/src/service/buildbucket.dart';
+import 'package:buildbucket/buildbucket_pb.dart' as bbv2;
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -21,21 +22,21 @@ class FakeBuildBucketClient extends BuildBucketClient {
     this.listBuildersResponse,
   }) : super(httpClient: MockClient((_) async => http.Response('', 200)));
 
-  Future<Build>? scheduleBuildResponse;
+  Future<bbv2.Build>? scheduleBuildResponse;
   Future<SearchBuildsResponse>? searchBuildsResponse;
   Future<BatchResponse> Function()? batchResponse;
-  Future<Build>? cancelBuildResponse;
-  Future<Build>? getBuildResponse;
+  Future<bbv2.Build>? cancelBuildResponse;
+  Future<bbv2.Build>? getBuildResponse;
   Future<ListBuildersResponse>? listBuildersResponse;
 
   @override
-  Future<Build> scheduleBuild(
+  Future<bbv2.Build> scheduleBuild(
     ScheduleBuildRequest? request, {
     String buildBucketUri = 'https://localhost/builds',
   }) async =>
       (scheduleBuildResponse != null)
           ? await scheduleBuildResponse!
-          : Build(
+          : bbv2.Build(
               id: '123',
               builderId: request!.builderId,
               tags: request.tags,
@@ -49,8 +50,8 @@ class FakeBuildBucketClient extends BuildBucketClient {
       (searchBuildsResponse != null)
           ? await searchBuildsResponse!
           : const SearchBuildsResponse(
-              builds: <Build>[
-                Build(
+              builds: <bbv2.Build>[
+                bbv2.Build(
                   id: '123',
                   builderId: BuilderId(
                     builder: 'builder_abc',

@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:convert';
-
+// import 'package:cocoon_service/src/model/luci/buildbucket.dart';
+import 'package:buildbucket/buildbucket_pb.dart' as bbv2;
 import 'package:cocoon_service/src/model/luci/buildbucket.dart';
 import 'package:meta/meta.dart';
 
@@ -45,17 +45,29 @@ class DartInternalSubscription extends SubscriptionHandler {
       return Body.empty;
     }
 
-    final dynamic buildData = json.decode(message.data!);
-    log.info('Build data json: $buildData');
+    // This looks to be processing buildbucket messages.
+    // final dynamic buildData = json.decode(message.data!);
 
-    if (buildData['build'] == null) {
+    final bbv2.PubSubCallBack pubSubCallBack = bbv2.PubSubCallBack.fromJson(message.data!);
+    final bbv2.BuildsV2PubSub buildsV2PubSub = pubSubCallBack.buildPubsub;
+    // final List<int> userDataBytes = pubSubCallBack.userData;
+    final bbv2.Build build = buildsV2PubSub.build;
+
+    //TODO not sure if this is intended to print the message.
+    log.info('Build data json: $pubSubCallBack');
+
+    if (!buildsV2PubSub.hasBuild()) {
       log.info('no build information in message');
       return Body.empty;
     }
 
-    final String project = buildData['build']['builder']['project'];
-    final String bucket = buildData['build']['builder']['bucket'];
-    final String builder = buildData['build']['builder']['builder'];
+    // final String project = buildData['build']['builder']['project'];
+    // final String bucket = buildData['build']['builder']['bucket'];
+    // final String builder = buildData['build']['builder']['builder'];
+
+    final String project = build.builder.project;
+    final String bucket = build.builder.bucket;
+    final String builder = build.builder.builder;
 
     // This should already be covered by the pubsub filter, but adding an additional check
     // to ensure we don't process builds that aren't from dart-internal/flutter.
@@ -74,16 +86,19 @@ class DartInternalSubscription extends SubscriptionHandler {
       return Body.empty;
     }
 
-    final String buildbucketId = buildData['build']['id'];
-    log.info('Creating build request object with build id $buildbucketId');
+    // final String buildbucketId = buildData['build']['id'];
+    final String buildBucketId = build.id.toString();
+    log.info('Creating build request object with build id $buildBucketId');
     final GetBuildRequest request = GetBuildRequest(
-      id: buildbucketId,
+      id: buildBucketId,
     );
 
     log.info(
-      'Calling buildbucket api to get build data for build $buildbucketId',
+      'Calling buildbucket api to get build data for build $buildBucketId',
     );
-    final Build build = await buildBucketClient.getBuild(request);
+
+
+    final bbv2.Build build = await buildBucketClient.getBuild(request);
 
     log.info('Checking for existing task in datastore');
     final Task? existingTask = await datastore.getTaskFromBuildbucketBuild(build);
