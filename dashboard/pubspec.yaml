@@ -31,7 +31,7 @@ dependencies:
   google_sign_in_web: any # Match google_sign_in
   http: 0.13.5
   protobuf: 2.1.0
-  provider: 6.0.5
+  provider: 6.1.1
   url_launcher: 6.1.11
   flutter_app_icons: 0.0.8
   truncate: 3.0.1
